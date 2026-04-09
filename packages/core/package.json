@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@drift/llm": "file:../llm",
     "@drift/parsers": "file:../parsers",
     "@drift/shared": "file:../shared"
   }

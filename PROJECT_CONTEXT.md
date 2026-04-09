@@ -1,4 +1,4 @@
-# Drift Guardian Project Context
+# Driftlyzer Project Context
 
 Este arquivo e o contexto canônico do projeto. Antes de evoluir arquitetura, detectores ou integracoes, releia este documento e trate-o como a fonte principal de verdade sobre escopo, prioridades e decisoes.
 
@@ -317,11 +317,13 @@ Bootstrap inicial do monorepo com:
 - `scan` retornando relacoes iniciais entre Angular <-> NestJS e README <-> NestJS
 - `scan` retornando relacoes iniciais entre README <-> scripts e README <-> envs
 - `scan` retornando findings iniciais para `api_contract_drift`, `documentation_drift` e `config_drift`
+- detector `frontend <-> backend` enriquecido com comparacao inicial de shape para request e response
+- suite formal de testes com fixtures versionados para cenarios alinhados e com drift
 
 ## Proximos Passos Imediatos
 
-1. Enriquecer o detector `frontend <-> backend` com payload e response shape.
-2. Introduzir uma camada de grafo/relations mais explicita no dominio.
-3. Preparar o esqueleto de `apps/api` e `apps/worker`.
-4. Criar uma suite de testes versionada para fixtures do engine.
+1. Introduzir uma camada de grafo/relations mais explicita no dominio.
+2. Preparar o esqueleto de `apps/api` e `apps/worker`.
+3. Enriquecer ainda mais o detector `frontend <-> backend` com suporte cross-file de tipos.
+4. Expandir a suite de testes para novos stacks e novos detectores.
 5. Em seguida, atacar a integracao com GitHub e comentario em PR.

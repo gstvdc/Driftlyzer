@@ -1,0 +1,6 @@
+{
+  "name": "config-fixture",
+  "scripts": {
+    "dev:api": "node server.js"
+  }
+}

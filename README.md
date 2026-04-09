@@ -1,6 +1,6 @@
-# Drift Guardian
+# Driftlyzer
 
-Drift Guardian e um analisador de consistencia continua para repositorios. O foco inicial e detectar drift entre backend NestJS, frontend Angular, README, comentarios e contratos de API.
+Driftlyzer e um analisador de consistencia continua para repositorios. O foco inicial e detectar drift entre backend NestJS, frontend Angular, README, comentarios e contratos de API.
 
 Leia primeiro [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md). Esse arquivo e a referencia persistente do projeto e concentra arquitetura, escopo, prioridades e o roadmap.
 
@@ -10,12 +10,26 @@ O repositorio foi inicializado com:
 
 - estrutura base de monorepo TypeScript
 - CLI local para `scan`
+- `apps/api` e `apps/worker` com bootstrap inicial orientado ao mesmo engine
 - pacote `core` com leitura e classificacao de arquivos
 - pacote `shared` com tipos iniciais do dominio
 - pacote `parsers` com extracao inicial de controllers/endpoints NestJS e chamadas HTTP Angular
 - parser de README para endpoints, comandos e envs
 - parser de `package.json` para scripts e parser de env para definicoes/usos
-- `scan` ja retornando artefatos, relacoes e findings iniciais
+- comparacao inicial de shape para request/response entre frontend e backend
+- detectores deterministicos cobrindo:
+  - frontend chamando rota inexistente no backend
+  - endpoint backend sem consumidor Angular
+  - mismatch de shape em request/response
+  - endpoint/script/env desatualizado no README
+  - comentario de endpoint com contrato desatualizado
+- pipeline de findings com score deterministico e flag de publicacao
+- revisao semantica opcional com IA local (Ollama + llama3) para explicar drift e sugerir correcao
+- `scan` retornando artefatos, relacoes, grafo explicito e findings em JSON
+- contrato estavel de finding v1 com `id`, `fingerprint`, `ruleVersion` e artefatos relacionados
+- modo de precisao por diff com expansao de impacto
+- MVP de GitHub com webhook, job em disco local, scan por diff e relatorio persistido
+- suite `Vitest` com fixtures versionados
 
 ## Primeiros Comandos
 
@@ -23,6 +37,133 @@ O repositorio foi inicializado com:
 npm install
 npm run scan -- .
 npm run scan -- . --json
+npm run scan -- . --publish-threshold 0.78
+npm run scan -- . --semantic-review --ollama-model llama3
+npm run scan -- . --changed-files frontend/src/app/users.service.ts,backend/src/users/users.controller.ts --impact-depth 2
+npm run api:dev
+npm run worker:run
+npm run dashboard:dev
+npm test
+```
+
+## Contrato de Finding v1
+
+Campos estaveis adicionados no finding:
+
+- `id`
+- `schemaVersion` (`finding.v1`)
+- `fingerprint`
+- `ruleVersion`
+- `relatedArtifactIds` e `relatedArtifacts`
+
+Campos de compatibilidade no summary:
+
+- `findingSchemaVersion`
+- `compatibleFindingSchemaVersions`
+
+Com isso, o consumidor externo (GitHub, dashboard, banco) consegue evoluir sem quebrar parsing.
+
+## Precision Engine
+
+Fluxo atual:
+
+- analise completa estrutural
+- score final por finding
+- opcao de recorte por diff (`--changed-files`)
+- expansao de impacto por relacoes (`--impact-depth`)
+- filtro de findings para escopo impactado
+
+Exemplo:
+
+```bash
+npm run scan -- . --changed-files frontend/src/app/users.service.ts,backend/src/users/users.controller.ts --impact-depth 2
+```
+
+## GitHub MVP Local
+
+Entrada (API):
+
+- endpoint `POST /webhooks/github`
+- persiste job em `.driftlyzer/jobs`
+
+Processamento (Worker):
+
+- consome jobs pendentes
+- executa `scan` por diff
+- persiste findings em `.driftlyzer/findings/<jobId>.json`
+- monta comentario de PR pronto para publicacao
+
+Rodar local:
+
+```bash
+npm run api:dev
+npm run worker:run
+```
+
+### Endpoints para dashboard
+
+- `GET /findings/reports`: lista de relatorios persistidos para feed
+- `GET /findings/reports/:jobId`: relatorio completo por job
+
+## Dashboard Local
+
+Interface de exploracao dos findings foi adicionada em `apps/dashboard`.
+
+Rodar local (em terminais separados):
+
+```bash
+npm run api:dev
+npm run dashboard:dev
+```
+
+O dashboard usa os relatorios persistidos em `.driftlyzer/findings` e mostra:
+
+- feed de relatorios
+- filtros por severidade, tipo, texto e publishable
+- painel de detalhe com `id`, `fingerprint`, `ruleVersion`, `schemaVersion` e score
+- informacoes de escopo (`full` ou `diff`)
+
+Idiomas do dashboard ficam centralizados em:
+
+- `apps/dashboard/src/languages.ts` (`pt-BR`, `en`, `es`, `fr`)
+
+## Modelo de Banco (base)
+
+Foi definido o modelo relacional inicial em:
+
+- `infra/database/schema.sql`
+
+E a decisao tecnica correspondente em:
+
+- `docs/decisions/0001-findings-persistence-model.md`
+
+Esse schema prepara a transicao do armazenamento JSON para DB sem quebrar o contrato v1.
+
+## Revisao Semantica com IA Local (Opcional)
+
+Estrategia adotada:
+
+- detector -> score -> (se necessario) IA -> output
+- IA so para explicacao semantica e sugestao de correcao
+- nucleo continua baseado em regras + AST
+
+Preparacao local gratuita:
+
+```bash
+ollama pull llama3
+ollama serve
+```
+
+Executar scan com revisao semantica:
+
+```bash
+npm run scan -- . --semantic-review --ollama-model llama3
+```
+
+Opcionalmente, configure URL customizada do Ollama:
+
+```bash
+npm run scan -- . --semantic-review --ollama-base-url http://127.0.0.1:11434
 ```
 
 ## Estrutura
@@ -37,8 +178,8 @@ PROJECT_CONTEXT.md
 
 ## Proximo Marco
 
-Implementar os primeiros extratores estruturais:
+Evoluir persistencia e produto:
 
-- enriquecimento de `frontend <-> backend` com payload/response
-- primeira camada explicita de relacoes/grafo no dominio
-- suite de testes versionada para fixtures
+- adaptar API/worker para persistencia SQL com transacoes
+- habilitar consultas historicas por `fingerprint` e por PR
+- publicar dashboard com autenticacao e filtros avancados

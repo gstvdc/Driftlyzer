@@ -1,31 +1,35 @@
-import ts from 'typescript';
+import ts from "typescript";
 
 import type {
   HttpMethod,
   NestControllerArtifact,
   NestEndpointArtifact,
   RepositoryArtifact,
-} from '@drift/shared';
+} from "@drift/shared";
+
+import { createTypeShapeResolver } from "../typescript/shape-resolver.js";
 
 const HTTP_DECORATOR_NAMES: Record<string, HttpMethod> = {
-  Get: 'GET',
-  Post: 'POST',
-  Put: 'PUT',
-  Patch: 'PATCH',
-  Delete: 'DELETE',
-  Options: 'OPTIONS',
-  Head: 'HEAD',
-  All: 'ALL',
+  Get: "GET",
+  Post: "POST",
+  Put: "PUT",
+  Patch: "PATCH",
+  Delete: "DELETE",
+  Options: "OPTIONS",
+  Head: "HEAD",
+  All: "ALL",
 };
 
-const PARAMETER_DECORATOR_PRIORITY = ['Body', 'Query', 'Param'] as const;
+const PARAMETER_DECORATOR_PRIORITY = ["Body", "Query", "Param"] as const;
 
 export type SourceFileInput = {
   filePath: string;
   content: string;
 };
 
-export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): RepositoryArtifact[] {
+export function extractNestArtifactsFromTypeScriptFile(
+  input: SourceFileInput,
+): RepositoryArtifact[] {
   const sourceFile = ts.createSourceFile(
     input.filePath,
     input.content,
@@ -33,6 +37,7 @@ export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): 
     true,
     ts.ScriptKind.TS,
   );
+  const shapeResolver = createTypeShapeResolver(sourceFile);
   const artifacts: RepositoryArtifact[] = [];
 
   for (const statement of sourceFile.statements) {
@@ -40,19 +45,19 @@ export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): 
       continue;
     }
 
-    const controllerDecorator = getDecoratorByName(statement, 'Controller');
+    const controllerDecorator = getDecoratorByName(statement, "Controller");
 
     if (!controllerDecorator) {
       continue;
     }
 
-    const className = statement.name?.text ?? 'AnonymousController';
+    const className = statement.name?.text ?? "AnonymousController";
     const basePath = readDecoratorPath(controllerDecorator, sourceFile);
     const controllerId = `nestjs_controller:${input.filePath}:${className}`;
     const controllerArtifact: NestControllerArtifact = {
       id: controllerId,
-      kind: 'nestjs_controller',
-      source: 'nestjs',
+      kind: "nestjs_controller",
+      source: "nestjs",
       file: input.filePath,
       line: toLineNumber(sourceFile, statement),
       className,
@@ -83,8 +88,8 @@ export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): 
       const handlerName = member.name.getText(sourceFile);
       const endpointArtifact: NestEndpointArtifact = {
         id: `nestjs_endpoint:${input.filePath}:${className}:${handlerName}:${method}:${joinRoute(basePath, routePath)}`,
-        kind: 'nestjs_endpoint',
-        source: 'nestjs',
+        kind: "nestjs_endpoint",
+        source: "nestjs",
         file: input.filePath,
         line: toLineNumber(sourceFile, member),
         controllerId,
@@ -93,8 +98,11 @@ export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): 
         path: routePath,
         fullPath: joinRoute(basePath, routePath),
         handlerName,
+        commentSummary: readLeadingCommentSummary(sourceFile, member),
         requestDto: extractRequestDto(member, sourceFile),
+        requestShape: extractRequestShape(member, shapeResolver),
         responseType: member.type?.getText(sourceFile) ?? null,
+        responseShape: shapeResolver.resolveTypeNode(member.type),
       };
 
       artifacts.push(endpointArtifact);
@@ -102,6 +110,23 @@ export function extractNestArtifactsFromTypeScriptFile(input: SourceFileInput): 
   }
 
   return artifacts;
+}
+
+function extractRequestShape(
+  method: ts.MethodDeclaration,
+  shapeResolver: ReturnType<typeof createTypeShapeResolver>,
+): string[] | null {
+  for (const decoratorName of PARAMETER_DECORATOR_PRIORITY) {
+    for (const parameter of method.parameters) {
+      if (!hasDecoratorNamed(parameter, decoratorName)) {
+        continue;
+      }
+
+      return shapeResolver.resolveTypeNode(parameter.type);
+    }
+  }
+
+  return null;
 }
 
 function extractRequestDto(
@@ -125,16 +150,23 @@ function getRouteDecorator(node: ts.Node): ts.Decorator | undefined {
   return getDecorators(node).find((decorator) => {
     const name = getDecoratorName(decorator);
 
-    return typeof name === 'string' && name in HTTP_DECORATOR_NAMES;
+    return typeof name === "string" && name in HTTP_DECORATOR_NAMES;
   });
 }
 
-function getDecoratorByName(node: ts.Node, name: string): ts.Decorator | undefined {
-  return getDecorators(node).find((decorator) => getDecoratorName(decorator) === name);
+function getDecoratorByName(
+  node: ts.Node,
+  name: string,
+): ts.Decorator | undefined {
+  return getDecorators(node).find(
+    (decorator) => getDecoratorName(decorator) === name,
+  );
 }
 
 function hasDecoratorNamed(node: ts.Node, name: string): boolean {
-  return getDecorators(node).some((decorator) => getDecoratorName(decorator) === name);
+  return getDecorators(node).some(
+    (decorator) => getDecoratorName(decorator) === name,
+  );
 }
 
 function getDecorators(node: ts.Node): readonly ts.Decorator[] {
@@ -165,22 +197,33 @@ function readExpressionName(expression: ts.Expression): string | null {
   return null;
 }
 
-function readDecoratorPath(decorator: ts.Decorator, sourceFile: ts.SourceFile): string {
+function readDecoratorPath(
+  decorator: ts.Decorator,
+  sourceFile: ts.SourceFile,
+): string {
   if (!ts.isCallExpression(decorator.expression)) {
-    return '';
+    return "";
   }
 
   const [firstArgument] = decorator.expression.arguments;
 
   if (!firstArgument) {
-    return '';
+    return "";
   }
 
-  return normalizeRouteFragment(readRouteValue(firstArgument, sourceFile) ?? '');
+  return normalizeRouteFragment(
+    readRouteValue(firstArgument, sourceFile) ?? "",
+  );
 }
 
-function readRouteValue(expression: ts.Expression, sourceFile: ts.SourceFile): string | null {
-  if (ts.isStringLiteralLike(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
+function readRouteValue(
+  expression: ts.Expression,
+  sourceFile: ts.SourceFile,
+): string | null {
+  if (
+    ts.isStringLiteralLike(expression) ||
+    ts.isNoSubstitutionTemplateLiteral(expression)
+  ) {
     return expression.text;
   }
 
@@ -192,7 +235,7 @@ function readRouteValue(expression: ts.Expression, sourceFile: ts.SourceFile): s
 
       const propertyName = getPropertyName(property.name);
 
-      if (propertyName !== 'path') {
+      if (propertyName !== "path") {
         continue;
       }
 
@@ -203,7 +246,10 @@ function readRouteValue(expression: ts.Expression, sourceFile: ts.SourceFile): s
   if (ts.isArrayLiteralExpression(expression)) {
     const routeValues = expression.elements
       .map((element) => readRouteValue(element, sourceFile))
-      .filter((value): value is string => typeof value === 'string' && value.length > 0);
+      .filter(
+        (value): value is string =>
+          typeof value === "string" && value.length > 0,
+      );
 
     return routeValues[0] ?? null;
   }
@@ -212,7 +258,11 @@ function readRouteValue(expression: ts.Expression, sourceFile: ts.SourceFile): s
 }
 
 function getPropertyName(name: ts.PropertyName): string | null {
-  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name) || ts.isNumericLiteral(name)) {
+  if (
+    ts.isIdentifier(name) ||
+    ts.isStringLiteralLike(name) ||
+    ts.isNumericLiteral(name)
+  ) {
     return name.text;
   }
 
@@ -222,23 +272,75 @@ function getPropertyName(name: ts.PropertyName): string | null {
 function normalizeRouteFragment(value: string): string {
   const trimmed = value.trim();
 
-  if (!trimmed || trimmed === '/') {
-    return '';
+  if (!trimmed || trimmed === "/") {
+    return "";
   }
 
-  return trimmed.replace(/^\/+|\/+$/g, '');
+  return trimmed.replace(/^\/+|\/+$/g, "");
 }
 
 function joinRoute(basePath: string, routePath: string): string {
-  const segments = [basePath, routePath].filter((segment) => segment.length > 0);
+  const segments = [basePath, routePath].filter(
+    (segment) => segment.length > 0,
+  );
 
   if (segments.length === 0) {
-    return '/';
+    return "/";
   }
 
-  return `/${segments.join('/')}`;
+  return `/${segments.join("/")}`;
 }
 
 function toLineNumber(sourceFile: ts.SourceFile, node: ts.Node): number {
-  return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+  return (
+    sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1
+  );
+}
+
+function readLeadingCommentSummary(
+  sourceFile: ts.SourceFile,
+  node: ts.Node,
+): string | null {
+  const fullText = sourceFile.getFullText();
+  const nodeStart = node.getStart(sourceFile);
+  const commentRanges =
+    ts.getLeadingCommentRanges(fullText, node.getFullStart()) ?? [];
+
+  for (let index = commentRanges.length - 1; index >= 0; index -= 1) {
+    const range = commentRanges[index];
+    const between = fullText.slice(range.end, nodeStart);
+
+    if (/\n\s*\n/.test(between)) {
+      continue;
+    }
+
+    return normalizeCommentText(fullText.slice(range.pos, range.end));
+  }
+
+  return null;
+}
+
+function normalizeCommentText(rawComment: string): string | null {
+  const trimmed = rawComment.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const lines = trimmed.startsWith("//")
+    ? trimmed.split(/\r?\n/).map((line) => line.replace(/^\s*\/\/\s?/, ""))
+    : trimmed
+        .replace(/^\/\*+/, "")
+        .replace(/\*+\/$/, "")
+        .split(/\r?\n/)
+        .map((line) => line.replace(/^\s*\*\s?/, ""));
+
+  const summary = lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return summary.length > 0 ? summary : null;
 }

@@ -1,0 +1,6 @@
+{
+  "name": "docs-config-drift-fixture",
+  "scripts": {
+    "dev": "node dev.js"
+  }
+}

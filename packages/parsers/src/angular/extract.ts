@@ -2,6 +2,8 @@ import ts from 'typescript';
 
 import type { AngularHttpCallArtifact } from '@drift/shared';
 
+import { createTypeShapeResolver } from '../typescript/shape-resolver.js';
+
 const ANGULAR_HTTP_METHOD_NAMES = {
   delete: 'DELETE',
   get: 'GET',
@@ -29,6 +31,7 @@ export function extractAngularHttpArtifactsFromTypeScriptFile(
     true,
     ts.ScriptKind.TS,
   );
+  const shapeResolver = createTypeShapeResolver(sourceFile);
   const httpClientTypeNames = collectHttpClientTypeNames(sourceFile);
 
   if (httpClientTypeNames.size === 0) {
@@ -68,6 +71,8 @@ export function extractAngularHttpArtifactsFromTypeScriptFile(
             filePath: input.filePath,
             httpClientNames,
             memberName,
+            member,
+            shapeResolver,
             sourceFile,
           });
 
@@ -192,9 +197,12 @@ function tryCreateHttpArtifact(params: {
   filePath: string;
   httpClientNames: Set<string>;
   memberName: string;
+  member: ts.MethodDeclaration | ts.PropertyDeclaration;
+  shapeResolver: ReturnType<typeof createTypeShapeResolver>;
   sourceFile: ts.SourceFile;
 }): AngularHttpCallArtifact | null {
-  const { node, className, filePath, httpClientNames, memberName, sourceFile } = params;
+  const { node, className, filePath, httpClientNames, member, memberName, shapeResolver, sourceFile } =
+    params;
 
   if (!ts.isPropertyAccessExpression(node.expression)) {
     return null;
@@ -220,7 +228,9 @@ function tryCreateHttpArtifact(params: {
 
   const urlExpression = urlArgument.getText(sourceFile);
   const normalizedPath = normalizeAngularUrl(urlArgument);
+  const payloadShape = extractPayloadShape(node, member, shapeResolver, sourceFile, methodName);
   const responseType = node.typeArguments?.[0]?.getText(sourceFile) ?? null;
+  const responseShape = shapeResolver.resolveTypeNode(node.typeArguments?.[0]);
   const method = ANGULAR_HTTP_METHOD_NAMES[methodName];
 
   return {
@@ -235,8 +245,48 @@ function tryCreateHttpArtifact(params: {
     httpClientName,
     urlExpression,
     normalizedPath,
+    payloadShape,
     responseType,
+    responseShape,
   };
+}
+
+function extractPayloadShape(
+  node: ts.CallExpression,
+  member: ts.MethodDeclaration | ts.PropertyDeclaration,
+  shapeResolver: ReturnType<typeof createTypeShapeResolver>,
+  sourceFile: ts.SourceFile,
+  methodName: AngularHttpMethodName,
+): string[] | null {
+  if (!['post', 'put', 'patch'].includes(methodName)) {
+    return null;
+  }
+
+  const payloadArgument = node.arguments[1];
+
+  if (!payloadArgument) {
+    return null;
+  }
+
+  const expressionShape = shapeResolver.resolveExpressionShape(payloadArgument);
+
+  if (expressionShape) {
+    return expressionShape;
+  }
+
+  if (ts.isIdentifier(payloadArgument) && ts.isMethodDeclaration(member)) {
+    for (const parameter of member.parameters) {
+      if (!ts.isIdentifier(parameter.name) || parameter.name.text !== payloadArgument.text) {
+        continue;
+      }
+
+      return shapeResolver.resolveTypeNode(parameter.type);
+    }
+  }
+
+  return payloadArgument.getText(sourceFile).startsWith('{')
+    ? shapeResolver.resolveExpressionShape(payloadArgument)
+    : null;
 }
 
 function readHttpClientReceiverName(expression: ts.Expression): string | null {

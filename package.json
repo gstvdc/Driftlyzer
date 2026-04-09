@@ -1,19 +1,25 @@
 {
-  "name": "drift-guardian",
+  "name": "driftlyzer",
   "version": "0.1.0",
   "private": true,
-  "description": "Continuous repository consistency analyzer with structural parsing and targeted semantic review.",
+  "description": "Driftlyzer: continuous repository consistency analyzer with structural parsing and targeted semantic review.",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
     "scan": "npm run dev -w @drift/cli -- scan",
+    "api:dev": "npm run dev -w @drift/api -- serve",
+    "worker:run": "npm run dev -w @drift/worker -- run-pending",
+    "dashboard:dev": "npm run dev -w @drift/dashboard",
+    "dashboard:build": "npm run build -w @drift/dashboard",
+    "test": "vitest run",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
   }
 }

@@ -7,3 +7,11 @@ coverage
 .next
 *.log
 *.tsbuildinfo
+
+# Local environment files (keep examples versioned)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example

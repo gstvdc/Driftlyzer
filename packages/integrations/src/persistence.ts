@@ -2,6 +2,15 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { RepositoryScanSummary } from "@drift/shared";
+import {
+  listFindingsReportsPostgres,
+  listPendingScanJobsPostgres,
+  markScanJobStatusPostgres,
+  persistFindingsReportPostgres,
+  persistScanJobPostgres,
+  readFindingsReportPostgres,
+  readScanJobPostgres,
+} from "./postgres-persistence.js";
 
 export type ScanJobStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -23,6 +32,22 @@ export type PersistedFindingsReport = {
   summary: RepositoryScanSummary;
   pullRequestCommentBody: string;
 };
+
+type PersistenceMode = "filesystem" | "postgres";
+
+const FILESYSTEM_MODE_VALUES = new Set([
+  "filesystem",
+  "file",
+  "local",
+  "disk",
+  "json",
+]);
+const POSTGRES_MODE_VALUES = new Set([
+  "postgres",
+  "postgresql",
+  "prisma",
+  "database",
+]);
 
 export function createScanJob(input: {
   repositoryPath: string;
@@ -47,7 +72,43 @@ export function createScanJob(input: {
   };
 }
 
+export function getPersistenceMode(): PersistenceMode {
+  const rawMode = process.env.DRIFTLYZER_PERSISTENCE?.trim().toLowerCase();
+
+  if (rawMode && FILESYSTEM_MODE_VALUES.has(rawMode)) {
+    return "filesystem";
+  }
+
+  if (rawMode && POSTGRES_MODE_VALUES.has(rawMode)) {
+    if (!process.env.DATABASE_URL?.trim()) {
+      throw new Error(
+        "DRIFTLYZER_PERSISTENCE=postgres requires DATABASE_URL to be set",
+      );
+    }
+
+    return "postgres";
+  }
+
+  if (process.env.DATABASE_URL?.trim()) {
+    return "postgres";
+  }
+
+  return "filesystem";
+}
+
 export async function persistScanJob(
+  storageRoot: string,
+  job: PersistedScanJob,
+): Promise<void> {
+  if (getPersistenceMode() === "postgres") {
+    await persistScanJobPostgres(job);
+    return;
+  }
+
+  await persistScanJobFilesystem(storageRoot, job);
+}
+
+async function persistScanJobFilesystem(
   storageRoot: string,
   job: PersistedScanJob,
 ): Promise<void> {
@@ -64,6 +125,17 @@ export async function readScanJob(
   storageRoot: string,
   jobId: string,
 ): Promise<PersistedScanJob> {
+  if (getPersistenceMode() === "postgres") {
+    return readScanJobPostgres(jobId);
+  }
+
+  return readScanJobFilesystem(storageRoot, jobId);
+}
+
+async function readScanJobFilesystem(
+  storageRoot: string,
+  jobId: string,
+): Promise<PersistedScanJob> {
   const content = await readFile(
     path.join(storageRoot, "jobs", `${jobId}.json`),
     "utf8",
@@ -73,6 +145,16 @@ export async function readScanJob(
 }
 
 export async function listPendingScanJobs(
+  storageRoot: string,
+): Promise<PersistedScanJob[]> {
+  if (getPersistenceMode() === "postgres") {
+    return listPendingScanJobsPostgres();
+  }
+
+  return listPendingScanJobsFilesystem(storageRoot);
+}
+
+async function listPendingScanJobsFilesystem(
   storageRoot: string,
 ): Promise<PersistedScanJob[]> {
   const jobsDir = path.join(storageRoot, "jobs");
@@ -95,6 +177,18 @@ export async function markScanJobStatus(
   job: PersistedScanJob,
   status: ScanJobStatus,
 ): Promise<PersistedScanJob> {
+  if (getPersistenceMode() === "postgres") {
+    return markScanJobStatusPostgres(job, status);
+  }
+
+  return markScanJobStatusFilesystem(storageRoot, job, status);
+}
+
+async function markScanJobStatusFilesystem(
+  storageRoot: string,
+  job: PersistedScanJob,
+  status: ScanJobStatus,
+): Promise<PersistedScanJob> {
   const updated: PersistedScanJob = {
     ...job,
     status,
@@ -106,6 +200,18 @@ export async function markScanJobStatus(
 }
 
 export async function persistFindingsReport(
+  storageRoot: string,
+  report: PersistedFindingsReport,
+): Promise<void> {
+  if (getPersistenceMode() === "postgres") {
+    await persistFindingsReportPostgres(report);
+    return;
+  }
+
+  await persistFindingsReportFilesystem(storageRoot, report);
+}
+
+async function persistFindingsReportFilesystem(
   storageRoot: string,
   report: PersistedFindingsReport,
 ): Promise<void> {
@@ -122,6 +228,17 @@ export async function readFindingsReport(
   storageRoot: string,
   jobId: string,
 ): Promise<PersistedFindingsReport> {
+  if (getPersistenceMode() === "postgres") {
+    return readFindingsReportPostgres(jobId);
+  }
+
+  return readFindingsReportFilesystem(storageRoot, jobId);
+}
+
+async function readFindingsReportFilesystem(
+  storageRoot: string,
+  jobId: string,
+): Promise<PersistedFindingsReport> {
   const content = await readFile(
     path.join(storageRoot, "findings", `${jobId}.json`),
     "utf8",
@@ -131,6 +248,16 @@ export async function readFindingsReport(
 }
 
 export async function listFindingsReports(
+  storageRoot: string,
+): Promise<PersistedFindingsReport[]> {
+  if (getPersistenceMode() === "postgres") {
+    return listFindingsReportsPostgres();
+  }
+
+  return listFindingsReportsFilesystem(storageRoot);
+}
+
+async function listFindingsReportsFilesystem(
   storageRoot: string,
 ): Promise<PersistedFindingsReport[]> {
   const findingsDir = path.join(storageRoot, "findings");

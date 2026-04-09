@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -79,14 +79,7 @@ describe("GitHub MVP flow", () => {
     expect(result.findings).toBe(3);
     expect(result.pullRequestCommentPublished).toBe(false);
 
-    const reportJson = await readFile(result.persistedReport, "utf8");
-    const report = JSON.parse(reportJson) as {
-      summary: {
-        analysisScope: {
-          mode: string;
-        };
-      };
-    };
+    const report = await readFindingsReportByJobId(job.id, storageRoot);
 
     expect(report.summary.analysisScope.mode).toBe("diff");
   });
@@ -111,9 +104,9 @@ describe("GitHub MVP flow", () => {
     });
 
     const feed = await listFindingsReportsFeed(storageRoot);
-    expect(feed.length).toBe(1);
-    expect(feed[0]?.jobId).toBe(job.id);
-    expect(feed[0]?.analysisMode).toBe("diff");
+    const reportFeedItem = feed.find((item) => item.jobId === job.id);
+    expect(reportFeedItem).toBeDefined();
+    expect(reportFeedItem?.analysisMode).toBe("diff");
 
     const report = await readFindingsReportByJobId(job.id, storageRoot);
     expect(report.job.id).toBe(job.id);

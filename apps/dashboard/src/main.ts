@@ -145,6 +145,7 @@ if (!rootElement) {
 const appRoot = rootElement;
 
 const DASHBOARD_LANGUAGE_STORAGE_KEY = "driftlyzer.dashboard.language";
+const DASHBOARD_LOGO_SRC = "/logo.png";
 
 function isDashboardLanguage(value: string): value is DashboardLanguage {
   return LANGUAGE_OPTIONS.some((option) => option.code === value);
@@ -195,6 +196,151 @@ const state: AppState = {
     search: "",
   },
 };
+
+type DashboardVisualCopy = {
+  tagline: string;
+  navOverview: string;
+  navFindings: string;
+  navRepositories: string;
+  navRules: string;
+  navSettings: string;
+  driftScore: string;
+  criticalIssues: string;
+  lastScan: string;
+  syncState: string;
+  findingsTable: string;
+  repositoriesPanel: string;
+  selectedFinding: string;
+  serviceGraph: string;
+  diffViewer: string;
+  codeBlock: string;
+  file: string;
+  status: string;
+  statusCritical: string;
+  statusWarning: string;
+  statusOk: string;
+  noDiffContext: string;
+  noCodeContext: string;
+  noGraphContext: string;
+  graphHint: string;
+};
+
+const DASHBOARD_VISUAL_COPY: Record<DashboardLanguage, DashboardVisualCopy> = {
+  "pt-BR": {
+    tagline: "Contratos, documentação e configuração em uma leitura só.",
+    navOverview: "Resumo",
+    navFindings: "Achados",
+    navRepositories: "Execuções",
+    navRules: "Cobertura",
+    navSettings: "Ajustes",
+    driftScore: "Índice de consistência",
+    criticalIssues: "Achados críticos",
+    lastScan: "Última análise",
+    syncState: "Atualização",
+    findingsTable: "Lista de achados",
+    repositoriesPanel: "Execuções recentes",
+    selectedFinding: "Detalhe do achado",
+    serviceGraph: "Panorama por área",
+    diffViewer: "Mudança relacionada",
+    codeBlock: "Resumo técnico",
+    file: "Arquivo",
+    status: "Status",
+    statusCritical: "Crítico",
+    statusWarning: "Atenção",
+    statusOk: "Saudável",
+    noDiffContext: "Selecione um finding para visualizar o diff contextual.",
+    noCodeContext: "Selecione um finding para visualizar o resumo técnico.",
+    noGraphContext: "Selecione uma execução para visualizar a distribuição por área.",
+    graphHint: "Leitura resumida por domínio.",
+  },
+  en: {
+    tagline: "Contracts, docs, and config in one clear view.",
+    navOverview: "Overview",
+    navFindings: "Findings",
+    navRepositories: "Runs",
+    navRules: "Coverage",
+    navSettings: "Settings",
+    driftScore: "Consistency Index",
+    criticalIssues: "Critical Findings",
+    lastScan: "Last Review",
+    syncState: "Sync",
+    findingsTable: "Findings List",
+    repositoriesPanel: "Recent Runs",
+    selectedFinding: "Finding Detail",
+    serviceGraph: "Area Overview",
+    diffViewer: "Related Change",
+    codeBlock: "Technical Summary",
+    file: "File",
+    status: "Status",
+    statusCritical: "Critical",
+    statusWarning: "Attention",
+    statusOk: "Healthy",
+    noDiffContext: "Select a finding to inspect contextual diff.",
+    noCodeContext: "Select a finding to inspect the technical summary.",
+    noGraphContext: "Select a run to inspect the area breakdown.",
+    graphHint: "Compact domain-level overview.",
+  },
+  es: {
+    tagline: "Contratos, docs y configuración en una sola vista.",
+    navOverview: "Resumen",
+    navFindings: "Hallazgos",
+    navRepositories: "Ejecuciones",
+    navRules: "Cobertura",
+    navSettings: "Ajustes",
+    driftScore: "Índice de consistencia",
+    criticalIssues: "Hallazgos críticos",
+    lastScan: "Último análisis",
+    syncState: "Actualización",
+    findingsTable: "Tabla de Hallazgos",
+    repositoriesPanel: "Ejecuciones recientes",
+    selectedFinding: "Detalle del hallazgo",
+    serviceGraph: "Panorama por área",
+    diffViewer: "Cambio relacionado",
+    codeBlock: "Resumen técnico",
+    file: "Archivo",
+    status: "Estado",
+    statusCritical: "Crítico",
+    statusWarning: "Atención",
+    statusOk: "Saludable",
+    noDiffContext: "Selecciona un hallazgo para ver el diff contextual.",
+    noCodeContext: "Selecciona un hallazgo para ver el resumen técnico.",
+    noGraphContext: "Selecciona una ejecución para ver la distribución por área.",
+    graphHint: "Lectura resumida por dominio.",
+  },
+  fr: {
+    tagline: "Contrats, docs et configuration dans une vue claire.",
+    navOverview: "Vue générale",
+    navFindings: "Constats",
+    navRepositories: "Exécutions",
+    navRules: "Couverture",
+    navSettings: "Réglages",
+    driftScore: "Indice de cohérence",
+    criticalIssues: "Constats critiques",
+    lastScan: "Dernière analyse",
+    syncState: "Mise à jour",
+    findingsTable: "Table des Constats",
+    repositoriesPanel: "Exécutions récentes",
+    selectedFinding: "Détail du constat",
+    serviceGraph: "Vue par domaine",
+    diffViewer: "Changement lié",
+    codeBlock: "Résumé technique",
+    file: "Fichier",
+    status: "Statut",
+    statusCritical: "Critique",
+    statusWarning: "Attention",
+    statusOk: "Stable",
+    noDiffContext: "Selectionnez un constat pour voir le diff contextuel.",
+    noCodeContext: "Selectionnez un constat pour voir le resume technique.",
+    noGraphContext: "Selectionnez une execution pour voir la repartition par domaine.",
+    graphHint: "Lecture resumee par domaine.",
+  },
+};
+
+function getVisualCopy(language: DashboardLanguage): DashboardVisualCopy {
+  return (
+    DASHBOARD_VISUAL_COPY[language] ?? DASHBOARD_VISUAL_COPY[DEFAULT_LANGUAGE]
+  );
+}
 
 void boot();
 
@@ -350,112 +496,201 @@ function render(): void {
     (sum, item) => sum + item.publishableFindings,
     0,
   );
-  const highestRisk = findings.reduce(
-    (max, finding) => Math.max(max, finding.score.final),
-    0,
-  );
+  const reportFindings = report?.summary.findings ?? [];
+  const driftScore =
+    reportFindings.length > 0
+      ? reportFindings.reduce((sum, finding) => sum + finding.score.final, 0) /
+        reportFindings.length
+      : 0;
+  const criticalIssues = reportFindings.filter(
+    (finding) => finding.severity === "critical",
+  ).length;
+  const lastScan = report
+    ? formatTimestamp(report.producedAt, state.language)
+    : "-";
+  const selectedFeedItem =
+    state.feed.find((item) => item.jobId === state.selectedJobId) ?? null;
+  const visualCopy = getVisualCopy(state.language);
   const messages = getDashboardMessages(state.language);
+  const syncTone = resolveSyncTone(
+    selectedFeedItem?.status,
+    Boolean(state.error),
+  );
+  const syncLabel = state.error
+    ? state.error
+    : selectedFeedItem
+      ? messages.statusLabels[selectedFeedItem.status]
+      : messages.ready;
 
   document.title = `Driftlyzer - ${messages.title}`;
 
   appRoot.innerHTML = `
-    <div class="ambient ambient-a"></div>
-    <div class="ambient ambient-b"></div>
-    <main class="layout">
-      <header class="hero reveal">
-        <p class="kicker">${escapeHtml(messages.missionControl)}</p>
-        <h1>${escapeHtml(messages.title)}</h1>
-        <p class="subtitle">${escapeHtml(messages.subtitle)}</p>
-        <div class="hero-stats">
-          <article class="metric">
-            <span class="metric-label">${escapeHtml(messages.reports)}</span>
-            <strong>${state.feed.length}</strong>
-          </article>
-          <article class="metric">
-            <span class="metric-label">${escapeHtml(messages.findings)}</span>
-            <strong>${totalFindings}</strong>
-          </article>
-          <article class="metric">
-            <span class="metric-label">${escapeHtml(messages.publishable)}</span>
-            <strong>${totalPublishable}</strong>
-          </article>
-          <article class="metric">
-            <span class="metric-label">${escapeHtml(messages.peakRisk)}</span>
-            <strong>${highestRisk.toFixed(2)}</strong>
-          </article>
+    <div class="grid-backdrop"></div>
+    <div class="shell">
+      <aside class="sidebar reveal">
+        <div class="brand-block">
+          <p class="kicker">${escapeHtml(messages.missionControl)}</p>
+          <div class="brand-logo" aria-hidden="true">
+            <img
+              class="brand-logo-image"
+              src="${escapeHtml(DASHBOARD_LOGO_SRC)}"
+              alt=""
+              loading="eager"
+              decoding="async"
+            />
+          </div>
+          <h1>Driftlyzer</h1>
+          <p class="brand-subtitle">${escapeHtml(visualCopy.tagline)}</p>
+          <div class="status-indicator tone-${syncTone}">
+            <span class="status-dot"></span>
+            <span>${escapeHtml(visualCopy.syncState)}: ${escapeHtml(syncLabel)}</span>
+          </div>
         </div>
-      </header>
 
-      <section class="controls reveal">
-        <label>
-          ${escapeHtml(messages.language)}
-          <select id="language-select">
-            ${renderLanguageOptions(state.language)}
-          </select>
-        </label>
-        <label>
-          ${escapeHtml(messages.severity)}
-          <select id="filter-severity">
-            ${renderSeverityOptions(state.filters.severity, messages)}
-          </select>
-        </label>
-        <label>
-          ${escapeHtml(messages.type)}
-          <select id="filter-type">
-            ${renderTypeOptions(state.filters.type, messages)}
-          </select>
-        </label>
-        <label>
-          ${escapeHtml(messages.search)}
-          <input id="filter-search" type="search" placeholder="${escapeHtml(
-            messages.searchPlaceholder,
-          )}" value="${escapeHtml(state.filters.search)}" />
-        </label>
-        <label class="checkbox-row">
-          <input id="filter-publishable" type="checkbox" ${
-            state.filters.publishableOnly ? "checked" : ""
-          } />
-          ${escapeHtml(messages.publishableOnly)}
-        </label>
-        <button id="refresh-feed" class="ghost">${escapeHtml(messages.refresh)}</button>
-      </section>
+        <nav class="sidebar-nav">
+          ${renderNavItem(visualCopy.navOverview, true)}
+          ${renderNavItem(visualCopy.navFindings)}
+          ${renderNavItem(visualCopy.navRepositories)}
+          ${renderNavItem(visualCopy.navRules)}
+          ${renderNavItem(visualCopy.navSettings)}
+        </nav>
 
-      <section class="panels">
-        <article class="panel reveal">
-          <div class="panel-head">
-            <h2>${escapeHtml(messages.reports)}</h2>
-            <span>${state.feed.length}</span>
-          </div>
-          <div class="report-list">
-            ${renderReportsList(messages)}
-          </div>
-        </article>
+        <div class="sidebar-actions">
+          <label>
+            ${escapeHtml(messages.language)}
+            <select id="language-select">
+              ${renderLanguageOptions(state.language)}
+            </select>
+          </label>
+          <button id="refresh-feed" class="ghost">${escapeHtml(messages.refresh)}</button>
+        </div>
+      </aside>
 
-        <article class="panel reveal">
-          <div class="panel-head">
-            <h2>${escapeHtml(messages.findings)}</h2>
+      <main class="dashboard-main">
+        <header class="card top-header reveal">
+          <p class="kicker">${escapeHtml(messages.title)}</p>
+          <h2>${escapeHtml(messages.subtitle)}</h2>
+        </header>
+
+        <section class="metrics-grid reveal">
+          <article class="card metric-card">
+            <span class="metric-label">${escapeHtml(visualCopy.driftScore)}</span>
+            <strong>${Math.round(driftScore * 100)}%</strong>
+            <p>${reportFindings.length} ${escapeHtml(messages.findings)}</p>
+          </article>
+          <article class="card metric-card">
+            <span class="metric-label">${escapeHtml(visualCopy.criticalIssues)}</span>
+            <strong>${criticalIssues}</strong>
+            <p>${totalFindings} ${escapeHtml(messages.findings)}</p>
+          </article>
+          <article class="card metric-card">
+            <span class="metric-label">${escapeHtml(visualCopy.lastScan)}</span>
+            <strong class="metric-timestamp">${escapeHtml(lastScan)}</strong>
+            <p>${totalPublishable} ${escapeHtml(messages.publishable)}</p>
+          </article>
+        </section>
+
+        <section class="card table-card reveal">
+          <div class="card-head">
+            <h3>${escapeHtml(visualCopy.findingsTable)}</h3>
             <span>${findings.length}</span>
           </div>
-          <div class="finding-list">
-            ${renderFindingsList(findings, messages)}
+          <div class="filters">
+            <label>
+              ${escapeHtml(messages.severity)}
+              <select id="filter-severity">
+                ${renderSeverityOptions(state.filters.severity, messages)}
+              </select>
+            </label>
+            <label>
+              ${escapeHtml(messages.type)}
+              <select id="filter-type">
+                ${renderTypeOptions(state.filters.type, messages)}
+              </select>
+            </label>
+            <label>
+              ${escapeHtml(messages.search)}
+              <input id="filter-search" type="search" placeholder="${escapeHtml(
+                messages.searchPlaceholder,
+              )}" value="${escapeHtml(state.filters.search)}" />
+            </label>
+            <label class="checkbox-inline">
+              <input id="filter-publishable" type="checkbox" ${
+                state.filters.publishableOnly ? "checked" : ""
+              } />
+              ${escapeHtml(messages.publishableOnly)}
+            </label>
           </div>
-        </article>
+          <div class="table-wrap">
+            ${renderFindingsTable(findings, messages, visualCopy)}
+          </div>
+        </section>
 
-        <article class="panel detail reveal">
-          <div class="panel-head">
-            <h2>${escapeHtml(messages.details)}</h2>
-            <span>${selectedFinding ? severityLabel(selectedFinding.severity, messages) : "-"}</span>
-          </div>
-          <div class="detail-content">
-            ${renderFindingDetail(selectedFinding, report, messages)}
-          </div>
-        </article>
-      </section>
+        <section class="bottom-grid">
+          <article class="card repos-panel reveal">
+            <div class="card-head">
+              <h3>${escapeHtml(visualCopy.repositoriesPanel)}</h3>
+              <span>${state.feed.length}</span>
+            </div>
+            <div class="report-list">
+              ${renderReportsList(messages)}
+            </div>
+          </article>
 
-      <footer class="status ${state.error ? "error" : ""}">
-        ${state.loadingFeed || state.loadingReport ? escapeHtml(messages.loadingData) : state.error ? escapeHtml(state.error) : escapeHtml(messages.ready)}
-      </footer>
-    </main>
+          <article class="card detail-panel reveal ${
+            selectedFinding && findingHealthTone(selectedFinding) === "critical"
+              ? "drift-highlight"
+              : ""
+          }">
+            <div class="card-head">
+              <h3>${escapeHtml(visualCopy.selectedFinding)}</h3>
+              <span>${
+                selectedFinding
+                  ? severityLabel(selectedFinding.severity, messages)
+                  : "-"
+              }</span>
+            </div>
+            <div class="detail-content">
+              ${renderFindingDetail(selectedFinding, report, messages)}
+            </div>
+          </article>
+
+          <article class="card graph-panel reveal">
+            <div class="card-head">
+              <h3>${escapeHtml(visualCopy.serviceGraph)}</h3>
+              <span>${escapeHtml(visualCopy.graphHint)}</span>
+            </div>
+            ${renderServiceGraph(report)}
+          </article>
+        </section>
+
+        <section class="support-grid reveal">
+          <article class="card diff-panel">
+            <div class="card-head">
+              <h3>${escapeHtml(visualCopy.diffViewer)}</h3>
+            </div>
+            ${renderDiffViewer(selectedFinding, visualCopy)}
+          </article>
+
+          <article class="card code-panel">
+            <div class="card-head">
+              <h3>${escapeHtml(visualCopy.codeBlock)}</h3>
+            </div>
+            ${renderFindingCodeBlock(selectedFinding, visualCopy)}
+          </article>
+        </section>
+
+        <footer class="status ${state.error ? "error" : ""}">
+          ${
+            state.loadingFeed || state.loadingReport
+              ? escapeHtml(messages.loadingData)
+              : state.error
+                ? escapeHtml(state.error)
+                : escapeHtml(messages.ready)
+          }
+        </footer>
+      </main>
+    </div>
   `;
 
   bindEvents();
@@ -477,10 +712,11 @@ function renderReportsList(messages: DashboardMessages): string {
 
       return `
         <button class="report-item ${selected}" data-report-id="${escapeHtml(item.jobId)}" style="--stagger:${index}">
-          <div>
+          <div class="report-top">
             <strong>${escapeHtml(repo)}</strong>
-            <p>#${item.pullRequestNumber ?? escapeHtml(messages.reportLocalLabel)} • ${escapeHtml(messages.analysisModeLabels[item.analysisMode])} • ${escapeHtml(messages.statusLabels[item.status])}</p>
+            <span class="status-pill ${item.status}">${escapeHtml(messages.statusLabels[item.status])}</span>
           </div>
+          <p class="report-meta">#${item.pullRequestNumber ?? escapeHtml(messages.reportLocalLabel)} • ${escapeHtml(messages.analysisModeLabels[item.analysisMode])}</p>
           <div class="report-counts">
             <span>${item.findings}</span>
             <small>${item.publishableFindings} ${escapeHtml(messages.reportPublishedShort)}</small>
@@ -491,9 +727,10 @@ function renderReportsList(messages: DashboardMessages): string {
     .join("");
 }
 
-function renderFindingsList(
+function renderFindingsTable(
   findings: Finding[],
   messages: DashboardMessages,
+  visualCopy: DashboardVisualCopy,
 ): string {
   if (!state.selectedJobId) {
     return `<p class="empty">${escapeHtml(messages.selectReport)}</p>`;
@@ -507,23 +744,46 @@ function renderFindingsList(
     return `<p class="empty">${escapeHtml(messages.noFindingsForFilters)}</p>`;
   }
 
-  return findings
-    .map((finding, index) => {
+  const rows = findings
+    .map((finding) => {
       const selected = finding.id === state.selectedFindingId ? "selected" : "";
+      const tone = findingHealthTone(finding);
+      const statusLabel =
+        tone === "critical"
+          ? visualCopy.statusCritical
+          : tone === "warning"
+            ? visualCopy.statusWarning
+            : visualCopy.statusOk;
+      const driftGlow = tone === "critical" ? "drift-glow" : "";
 
       return `
-        <button class="finding-item ${selected}" data-finding-id="${escapeHtml(finding.id)}" style="--stagger:${index}">
-          <div class="finding-row">
-            <span class="badge severity-${finding.severity}">${severityLabel(finding.severity, messages)}</span>
-            <span class="badge neutral">${escapeHtml(messages.typeLabels[finding.type])}</span>
-            <span class="score">${finding.score.final.toFixed(2)}</span>
-          </div>
-          <p>${escapeHtml(finding.userMessage)}</p>
-          <small>${escapeHtml(finding.file)}</small>
-        </button>
+        <tr class="finding-table-row ${selected} ${driftGlow}" data-finding-id="${escapeHtml(finding.id)}" tabindex="0" role="button">
+          <td><span class="badge neutral">${escapeHtml(messages.typeLabels[finding.type])}</span></td>
+          <td><span class="badge severity-${finding.severity}">${severityLabel(finding.severity, messages)}</span></td>
+          <td class="mono">${finding.score.final.toFixed(2)}</td>
+          <td class="mono">${escapeHtml(finding.file)}</td>
+          <td><span class="status-badge tone-${tone}">${escapeHtml(statusLabel)}</span></td>
+        </tr>
       `;
     })
     .join("");
+
+  return `
+    <table class="findings-table">
+      <thead>
+        <tr>
+          <th>${escapeHtml(messages.type)}</th>
+          <th>${escapeHtml(messages.severity)}</th>
+          <th>Score</th>
+          <th>${escapeHtml(visualCopy.file)}</th>
+          <th>${escapeHtml(visualCopy.status)}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderFindingDetail(
@@ -584,6 +844,149 @@ function renderFindingDetail(
           : escapeHtml(messages.noSemanticReview)
       }</p>
     </section>
+  `;
+}
+
+function renderNavItem(label: string, active = false): string {
+  return `<button class="nav-item ${active ? "active" : ""}" type="button">${escapeHtml(label)}</button>`;
+}
+
+function findingHealthTone(finding: Finding): "critical" | "warning" | "ok" {
+  if (finding.severity === "critical" || finding.severity === "high") {
+    return "critical";
+  }
+
+  if (finding.severity === "medium") {
+    return "warning";
+  }
+
+  return "ok";
+}
+
+function resolveSyncTone(
+  status: PersistedScanJob["status"] | undefined,
+  hasError: boolean,
+): "critical" | "warning" | "ok" {
+  if (hasError || status === "failed") {
+    return "critical";
+  }
+
+  if (status === "processing" || status === "pending") {
+    return "warning";
+  }
+
+  return "ok";
+}
+
+function formatTimestamp(value: string, language: DashboardLanguage): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  try {
+    return new Intl.DateTimeFormat(language, {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(date);
+  } catch {
+    return value;
+  }
+}
+
+function renderDiffViewer(
+  finding: Finding | undefined,
+  visualCopy: DashboardVisualCopy,
+): string {
+  if (!finding) {
+    return `<p class="empty">${escapeHtml(visualCopy.noDiffContext)}</p>`;
+  }
+
+  const relatedPath = finding.relatedFile ?? "docs/contract.md";
+  const lines: Array<{
+    tone: "ctx" | "add" | "del";
+    text: string;
+  }> = [
+    {
+      tone: "ctx",
+      text: `@@ ${relatedPath} -> ${finding.file} @@`,
+    },
+    {
+      tone: "del",
+      text: `- ${relatedPath}: ${finding.evidence}`,
+    },
+    {
+      tone: "add",
+      text: `+ ${finding.file}: ${finding.userMessage}`,
+    },
+  ];
+
+  return `
+    <pre class="diff-viewer">${lines
+      .map(
+        (line) =>
+          `<span class="diff-line ${line.tone}">${escapeHtml(line.text)}</span>`,
+      )
+      .join("")}</pre>
+  `;
+}
+
+function renderFindingCodeBlock(
+  finding: Finding | undefined,
+  visualCopy: DashboardVisualCopy,
+): string {
+  if (!finding) {
+    return `<p class="empty">${escapeHtml(visualCopy.noCodeContext)}</p>`;
+  }
+
+  const payload = {
+    id: finding.id,
+    fingerprint: finding.fingerprint,
+    type: finding.type,
+    severity: finding.severity,
+    score: finding.score,
+    publishable: finding.publishable,
+    file: finding.file,
+    relatedFile: finding.relatedFile,
+    relatedArtifacts: finding.relatedArtifacts,
+  };
+
+  return `<pre class="code-block">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+}
+
+function renderServiceGraph(report: PersistedFindingsReport | null): string {
+  if (!report) {
+    return `<p class="empty">${escapeHtml(getVisualCopy(state.language).noGraphContext)}</p>`;
+  }
+
+  const counts = report.summary.findingCounts;
+
+  return `
+    <div class="service-graph">
+      <span class="graph-edge edge-api"></span>
+      <span class="graph-edge edge-docs"></span>
+      <span class="graph-edge edge-config"></span>
+      <span class="graph-edge edge-tests"></span>
+      ${renderGraphNode("API", counts.api_contract_drift, "node-api")}
+      ${renderGraphNode("Docs", counts.documentation_drift, "node-docs")}
+      ${renderGraphNode("Config", counts.config_drift, "node-config")}
+      ${renderGraphNode("Tests", counts.test_drift, "node-tests")}
+      ${renderGraphNode("Comments", counts.comment_drift, "node-comments")}
+    </div>
+  `;
+}
+
+function renderGraphNode(
+  label: string,
+  count: number,
+  className: string,
+): string {
+  return `
+    <div class="graph-node ${className} ${count > 0 ? "hot" : "ok"}">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${count}</span>
+    </div>
   `;
 }
 
@@ -682,10 +1085,10 @@ function bindEvents(): void {
     });
 
   document
-    .querySelectorAll<HTMLButtonElement>("[data-finding-id]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        const findingId = button.dataset.findingId;
+    .querySelectorAll<HTMLElement>("[data-finding-id]")
+    .forEach((item) => {
+      const selectFinding = (): void => {
+        const findingId = item.dataset.findingId;
 
         if (!findingId) {
           return;
@@ -693,6 +1096,14 @@ function bindEvents(): void {
 
         state.selectedFindingId = findingId;
         render();
+      };
+
+      item.addEventListener("click", selectFinding);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectFinding();
+        }
       });
     });
 }

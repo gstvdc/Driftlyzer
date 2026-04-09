@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScanJobStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model ScanJob {
+  id                String          @id @map("job_id")
+  createdAt         DateTime        @map("created_at")
+  updatedAt         DateTime        @map("updated_at")
+  status            ScanJobStatus
+  repositoryPath    String          @map("repository_path")
+  changedFilesJson  Json            @map("changed_files_json")
+  repositoryFullName String?        @map("repository_full_name")
+  pullRequestNumber Int?            @map("pull_request_number")
+  deliveryId        String?         @map("delivery_id")
+  findingsReport    FindingsReport?
+
+  @@index([status], map: "idx_scan_jobs_status")
+  @@index([repositoryFullName, pullRequestNumber], map: "idx_scan_jobs_repo_pr")
+  @@map("scan_jobs")
+}
+
+model FindingsReport {
+  jobId                  String   @id @map("job_id")
+  producedAt             DateTime @map("produced_at")
+  summaryJson            Json     @map("summary_json")
+  pullRequestCommentBody String   @map("pull_request_comment_body")
+  job                    ScanJob  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([producedAt], map: "idx_findings_reports_produced_at")
+  @@map("findings_reports")
+}
+
+model PullRequestComment {
+  id                 String   @id @map("comment_id")
+  jobId              String   @map("job_id")
+  repositoryFullName String   @map("repository_full_name")
+  pullRequestNumber  Int      @map("pull_request_number")
+  body               String
+  published          Boolean
+  provider           String
+  remoteCommentId    String?  @map("remote_comment_id")
+  createdAt          DateTime @map("created_at")
+  updatedAt          DateTime @map("updated_at")
+
+  @@index([jobId], map: "idx_pull_request_comments_job_id")
+  @@index([repositoryFullName, pullRequestNumber], map: "idx_pull_request_comments_repo_pr")
+  @@map("pull_request_comments")
+}

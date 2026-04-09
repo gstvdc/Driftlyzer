@@ -8,6 +8,7 @@ export {
 
 export {
   createScanJob,
+  getPersistenceMode,
   listFindingsReports,
   listPendingScanJobs,
   markScanJobStatus,

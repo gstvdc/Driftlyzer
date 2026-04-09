@@ -94,10 +94,10 @@ const COMMON_TYPE_LABELS = {
 export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
   {
     "pt-BR": {
-      missionControl: "Centro de Controle Driftlyzer",
-      title: "Painel de Consistência",
+      missionControl: "Visão do repositório",
+      title: "Painel de consistência",
       subtitle:
-        "Monitore contratos, documentação e configuração com núcleo determinístico e assistência semântica opcional.",
+        "Acompanhe divergências entre código, contratos, configuração e documentação a partir dos scans mais recentes.",
       language: "Idioma",
       reports: "Relatórios",
       findings: "Achados",
@@ -177,10 +177,10 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       allLabel: "todos",
     },
     en: {
-      missionControl: "Driftlyzer Mission Control",
-      title: "Consistency Surface",
+      missionControl: "Repository View",
+      title: "Consistency Dashboard",
       subtitle:
-        "Monitor contracts, documentation, and configuration with a deterministic core and optional semantic assist.",
+        "Track drift across code, contracts, configuration, and documentation from the latest scans.",
       language: "Language",
       reports: "Reports",
       findings: "Findings",
@@ -253,10 +253,10 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       allLabel: "all",
     },
     es: {
-      missionControl: "Centro de Mando Driftlyzer",
-      title: "Panel de Consistencia",
+      missionControl: "Vista del repositorio",
+      title: "Panel de consistencia",
       subtitle:
-        "Monitorea contratos, documentación y configuración con núcleo determinista y asistencia semántica opcional.",
+        "Sigue divergencias entre código, contratos, configuración y documentación a partir de los análisis más recientes.",
       language: "Idioma",
       reports: "Reportes",
       findings: "Hallazgos",
@@ -336,10 +336,10 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       allLabel: "todos",
     },
     fr: {
-      missionControl: "Centre de Contrôle Driftlyzer",
-      title: "Tableau de Cohérence",
+      missionControl: "Vue du dépôt",
+      title: "Tableau de cohérence",
       subtitle:
-        "Surveillez contrats, documentation et configuration avec un noyau déterministe et une aide sémantique optionnelle.",
+        "Suivez les écarts entre code, contrats, configuration et documentation à partir des analyses récentes.",
       language: "Langue",
       reports: "Rapports",
       findings: "Constats",

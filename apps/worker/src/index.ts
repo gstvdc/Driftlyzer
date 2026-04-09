@@ -3,6 +3,7 @@ import path from "node:path";
 import { scanRepository } from "@drift/core";
 import {
   buildDriftlyzerPullRequestComment,
+  getPersistenceMode,
   listPendingScanJobs,
   markScanJobStatus,
   parseRepositoryFullName,
@@ -89,7 +90,10 @@ export async function runScanJob(
     scannedPath: summary.rootPath,
     findings: summary.totalFindings,
     relations: summary.totalRelations,
-    persistedReport: path.join(storageRoot, "findings", `${job.id}.json`),
+    persistedReport:
+      getPersistenceMode() === "postgres"
+        ? `postgres:findings_reports/${job.id}`
+        : path.join(storageRoot, "findings", `${job.id}.json`),
     pullRequestCommentPublished,
   };
 }

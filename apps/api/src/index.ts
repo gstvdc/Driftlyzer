@@ -223,7 +223,10 @@ export function startApiServer(
         const message =
           error instanceof Error ? error.message : "Unknown error";
 
-        if (message.includes("ENOENT")) {
+        if (
+          message.includes("ENOENT") ||
+          message.includes("Findings report not found")
+        ) {
           respondJson(response, 404, {
             error: `Report not found for job ${jobId}`,
           });

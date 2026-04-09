@@ -13,6 +13,10 @@
     "worker:run": "npm run dev -w @drift/worker -- run-pending",
     "dashboard:dev": "npm run dev -w @drift/dashboard",
     "dashboard:build": "npm run build -w @drift/dashboard",
+    "prisma:generate": "npm run prisma:generate -w @drift/integrations",
+    "prisma:migrate:dev": "npm run prisma:migrate:dev -w @drift/integrations --",
+    "prisma:migrate:init": "npm run prisma:migrate:dev -- --name init",
+    "prisma:db:push": "npm run prisma:db:push -w @drift/integrations",
     "test": "vitest run",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

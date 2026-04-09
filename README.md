@@ -28,7 +28,7 @@ O repositorio foi inicializado com:
 - `scan` retornando artefatos, relacoes, grafo explicito e findings em JSON
 - contrato estavel de finding v1 com `id`, `fingerprint`, `ruleVersion` e artefatos relacionados
 - modo de precisao por diff com expansao de impacto
-- MVP de GitHub com webhook, job em disco local, scan por diff e relatorio persistido
+- MVP de GitHub com webhook, scan por diff e relatorio persistido em backend configuravel (filesystem ou PostgreSQL/Prisma)
 - suite `Vitest` com fixtures versionados
 
 ## Primeiros Comandos
@@ -43,7 +43,48 @@ npm run scan -- . --changed-files frontend/src/app/users.service.ts,backend/src/
 npm run api:dev
 npm run worker:run
 npm run dashboard:dev
+npm run prisma:generate
 npm test
+```
+
+## Persistencia (Filesystem ou PostgreSQL)
+
+Camada de persistencia agora suporta 2 modos:
+
+- `filesystem` (padrao quando `DATABASE_URL` nao estiver definida)
+- `postgres` (automatico quando `DATABASE_URL` estiver definida, ou explicito via `DRIFTLYZER_PERSISTENCE=postgres`)
+
+Configuracao basica em `.env` (use `.env.example` como base):
+
+```bash
+DRIFTLYZER_PERSISTENCE=postgres
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/driftlyzer?schema=public
+```
+
+Inicializacao do Prisma:
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate:init
+```
+
+Se preferir nome customizado da migration:
+
+```bash
+npm run prisma:migrate:dev -- --name <nome_da_migration>
+```
+
+Importante: o comando de migrate so funciona com `DATABASE_URL` definida no ambiente.
+Exemplo rapido:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/driftlyzer?schema=public npm run prisma:migrate:init
+```
+
+Alternativa sem migration local (ambiente de desenvolvimento):
+
+```bash
+npm run prisma:db:push
 ```
 
 ## Contrato de Finding v1
@@ -84,13 +125,13 @@ npm run scan -- . --changed-files frontend/src/app/users.service.ts,backend/src/
 Entrada (API):
 
 - endpoint `POST /webhooks/github`
-- persiste job em `.driftlyzer/jobs`
+- persiste job no backend configurado
 
 Processamento (Worker):
 
 - consome jobs pendentes
 - executa `scan` por diff
-- persiste findings em `.driftlyzer/findings/<jobId>.json`
+- persiste findings no backend configurado
 - monta comentario de PR pronto para publicacao
 
 Rodar local:
@@ -116,7 +157,7 @@ npm run api:dev
 npm run dashboard:dev
 ```
 
-O dashboard usa os relatorios persistidos em `.driftlyzer/findings` e mostra:
+O dashboard usa os relatorios persistidos no backend configurado e mostra:
 
 - feed de relatorios
 - filtros por severidade, tipo, texto e publishable

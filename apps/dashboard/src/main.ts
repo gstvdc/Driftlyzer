@@ -1,4 +1,3 @@
-import "./styles.css";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_OPTIONS,
@@ -250,7 +249,8 @@ const DASHBOARD_VISUAL_COPY: Record<DashboardLanguage, DashboardVisualCopy> = {
     statusOk: "Saudável",
     noDiffContext: "Selecione um finding para visualizar o diff contextual.",
     noCodeContext: "Selecione um finding para visualizar o resumo técnico.",
-    noGraphContext: "Selecione uma execução para visualizar a distribuição por área.",
+    noGraphContext:
+      "Selecione uma execução para visualizar a distribuição por área.",
     graphHint: "Leitura resumida por domínio.",
   },
   en: {
@@ -304,7 +304,8 @@ const DASHBOARD_VISUAL_COPY: Record<DashboardLanguage, DashboardVisualCopy> = {
     statusOk: "Saludable",
     noDiffContext: "Selecciona un hallazgo para ver el diff contextual.",
     noCodeContext: "Selecciona un hallazgo para ver el resumen técnico.",
-    noGraphContext: "Selecciona una ejecución para ver la distribución por área.",
+    noGraphContext:
+      "Selecciona una ejecución para ver la distribución por área.",
     graphHint: "Lectura resumida por dominio.",
   },
   fr: {
@@ -331,7 +332,8 @@ const DASHBOARD_VISUAL_COPY: Record<DashboardLanguage, DashboardVisualCopy> = {
     statusOk: "Stable",
     noDiffContext: "Selectionnez un constat pour voir le diff contextuel.",
     noCodeContext: "Selectionnez un constat pour voir le resume technique.",
-    noGraphContext: "Selectionnez une execution pour voir la repartition par domaine.",
+    noGraphContext:
+      "Selectionnez une execution pour voir la repartition par domaine.",
     graphHint: "Lecture resumee par domaine.",
   },
 };
@@ -522,165 +524,181 @@ function render(): void {
       ? messages.statusLabels[selectedFeedItem.status]
       : messages.ready;
 
+  appRoot.className =
+    "relative min-h-screen overflow-x-hidden p-3 md:p-4 text-[#E5E7EB]";
+
   document.title = `Driftlyzer - ${messages.title}`;
 
   appRoot.innerHTML = `
-    <div class="grid-backdrop"></div>
-    <div class="shell">
-      <aside class="sidebar reveal">
-        <div class="brand-block">
-          <p class="kicker">${escapeHtml(messages.missionControl)}</p>
-          <div class="brand-logo" aria-hidden="true">
-            <img
-              class="brand-logo-image"
-              src="${escapeHtml(DASHBOARD_LOGO_SRC)}"
-              alt=""
-              loading="eager"
-              decoding="async"
-            />
+    <div
+      class="pointer-events-none fixed inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,_transparent_1px),linear-gradient(90deg,_rgba(148,163,184,0.08)_1px,_transparent_1px)] [background-size:56px_56px]"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="pointer-events-none fixed inset-0 [background-image:radial-gradient(1200px_600px_at_84%_-8%,_rgba(99,102,241,0.16),_transparent_55%),radial-gradient(900px_500px_at_-10%_112%,_rgba(99,102,241,0.08),_transparent_54%)]"
+      aria-hidden="true"
+    ></div>
+    <div class="relative mx-auto grid w-[min(1460px,96vw)] grid-cols-1 gap-4 xl:grid-cols-[272px_minmax(0,1fr)]">
+      <aside class="rounded-2xl border border-white/10 bg-[#111827] p-4 xl:sticky xl:top-3 xl:min-h-[calc(100vh-1.5rem)]">
+        <div class="flex h-full flex-col gap-4">
+          <div>
+            <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.missionControl)}</p>
+            <div class="mt-3 w-full max-w-[194px]" aria-hidden="true">
+              <img
+                class="block h-auto max-h-[104px] w-full object-contain object-left"
+                src="${escapeHtml(DASHBOARD_LOGO_SRC)}"
+                alt=""
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+            <h1 class="mt-3 font-sans text-[1.55rem] font-semibold tracking-[-0.02em] text-[#F3F4F6]">Driftlyzer</h1>
+            <p class="mt-2 max-w-[29ch] text-sm leading-6 text-[#9CA3AF]">${escapeHtml(visualCopy.tagline)}</p>
+            <div class="${syncIndicatorClasses(syncTone)}">
+              <span class="inline-block h-2 w-2 rounded-full bg-current"></span>
+              <span>${escapeHtml(visualCopy.syncState)}: ${escapeHtml(syncLabel)}</span>
+            </div>
           </div>
-          <h1>Driftlyzer</h1>
-          <p class="brand-subtitle">${escapeHtml(visualCopy.tagline)}</p>
-          <div class="status-indicator tone-${syncTone}">
-            <span class="status-dot"></span>
-            <span>${escapeHtml(visualCopy.syncState)}: ${escapeHtml(syncLabel)}</span>
+
+          <nav class="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+            ${renderNavItem(visualCopy.navOverview, true)}
+            ${renderNavItem(visualCopy.navFindings)}
+            ${renderNavItem(visualCopy.navRepositories)}
+            ${renderNavItem(visualCopy.navRules)}
+            ${renderNavItem(visualCopy.navSettings)}
+          </nav>
+
+          <div class="mt-auto grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-1">
+            <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
+              ${escapeHtml(messages.language)}
+              <select id="language-select" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
+                ${renderLanguageOptions(state.language)}
+              </select>
+            </label>
+            <button id="refresh-feed" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-4 text-sm font-semibold text-[#E5E7EB] transition hover:border-white/20 hover:bg-[#162034] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30">${escapeHtml(messages.refresh)}</button>
           </div>
-        </div>
-
-        <nav class="sidebar-nav">
-          ${renderNavItem(visualCopy.navOverview, true)}
-          ${renderNavItem(visualCopy.navFindings)}
-          ${renderNavItem(visualCopy.navRepositories)}
-          ${renderNavItem(visualCopy.navRules)}
-          ${renderNavItem(visualCopy.navSettings)}
-        </nav>
-
-        <div class="sidebar-actions">
-          <label>
-            ${escapeHtml(messages.language)}
-            <select id="language-select">
-              ${renderLanguageOptions(state.language)}
-            </select>
-          </label>
-          <button id="refresh-feed" class="ghost">${escapeHtml(messages.refresh)}</button>
         </div>
       </aside>
 
-      <main class="dashboard-main">
-        <header class="card top-header reveal">
-          <p class="kicker">${escapeHtml(messages.title)}</p>
-          <h2>${escapeHtml(messages.subtitle)}</h2>
+      <main class="grid min-w-0 gap-4">
+        <header class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+          <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.title)}</p>
+          <h2 class="mt-2 max-w-[68ch] text-[clamp(1.02rem,1.3vw,1.18rem)] font-medium leading-7 text-[#CBD5E1]">${escapeHtml(messages.subtitle)}</h2>
         </header>
 
-        <section class="metrics-grid reveal">
-          <article class="card metric-card">
-            <span class="metric-label">${escapeHtml(visualCopy.driftScore)}</span>
-            <strong>${Math.round(driftScore * 100)}%</strong>
-            <p>${reportFindings.length} ${escapeHtml(messages.findings)}</p>
+        <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.driftScore)}</span>
+            <strong class="mt-2 block text-4xl font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${Math.round(driftScore * 100)}%</strong>
+            <p class="mt-2 text-sm text-[#9CA3AF]">${reportFindings.length} ${escapeHtml(messages.findings)}</p>
           </article>
-          <article class="card metric-card">
-            <span class="metric-label">${escapeHtml(visualCopy.criticalIssues)}</span>
-            <strong>${criticalIssues}</strong>
-            <p>${totalFindings} ${escapeHtml(messages.findings)}</p>
+          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.criticalIssues)}</span>
+            <strong class="mt-2 block text-4xl font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${criticalIssues}</strong>
+            <p class="mt-2 text-sm text-[#9CA3AF]">${totalFindings} ${escapeHtml(messages.findings)}</p>
           </article>
-          <article class="card metric-card">
-            <span class="metric-label">${escapeHtml(visualCopy.lastScan)}</span>
-            <strong class="metric-timestamp">${escapeHtml(lastScan)}</strong>
-            <p>${totalPublishable} ${escapeHtml(messages.publishable)}</p>
+          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.lastScan)}</span>
+            <strong class="mt-2 block text-xl font-semibold leading-6 text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${escapeHtml(lastScan)}</strong>
+            <p class="mt-2 text-sm text-[#9CA3AF]">${totalPublishable} ${escapeHtml(messages.publishable)}</p>
           </article>
         </section>
 
-        <section class="card table-card reveal">
-          <div class="card-head">
-            <h3>${escapeHtml(visualCopy.findingsTable)}</h3>
-            <span>${findings.length}</span>
+        <section class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.findingsTable)}</h3>
+            <span class="text-xs text-[#9CA3AF]">${findings.length}</span>
           </div>
-          <div class="filters">
-            <label>
+          <div class="mb-3 grid gap-2 md:grid-cols-[0.92fr_0.92fr_1.2fr_auto]">
+            <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
               ${escapeHtml(messages.severity)}
-              <select id="filter-severity">
+              <select id="filter-severity" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
                 ${renderSeverityOptions(state.filters.severity, messages)}
               </select>
             </label>
-            <label>
+            <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
               ${escapeHtml(messages.type)}
-              <select id="filter-type">
+              <select id="filter-type" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
                 ${renderTypeOptions(state.filters.type, messages)}
               </select>
             </label>
-            <label>
+            <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
               ${escapeHtml(messages.search)}
-              <input id="filter-search" type="search" placeholder="${escapeHtml(
+              <input id="filter-search" type="search" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition placeholder:text-[#9CA3AF]/80 focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30" placeholder="${escapeHtml(
                 messages.searchPlaceholder,
               )}" value="${escapeHtml(state.filters.search)}" />
             </label>
-            <label class="checkbox-inline">
-              <input id="filter-publishable" type="checkbox" ${
+            <label class="inline-flex min-h-10 items-center gap-2 self-end rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB]">
+              <input id="filter-publishable" type="checkbox" class="h-4 w-4 accent-[#6366F1]" ${
                 state.filters.publishableOnly ? "checked" : ""
               } />
               ${escapeHtml(messages.publishableOnly)}
             </label>
           </div>
-          <div class="table-wrap">
+          <div class="overflow-auto rounded-xl border border-white/10 bg-[#0F172A]">
             ${renderFindingsTable(findings, messages, visualCopy)}
           </div>
         </section>
 
-        <section class="bottom-grid">
-          <article class="card repos-panel reveal">
-            <div class="card-head">
-              <h3>${escapeHtml(visualCopy.repositoriesPanel)}</h3>
-              <span>${state.feed.length}</span>
+        <section class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,1fr)]">
+          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.repositoriesPanel)}</h3>
+              <span class="text-xs text-[#9CA3AF]">${state.feed.length}</span>
             </div>
-            <div class="report-list">
+            <div class="max-h-[420px] overflow-auto pr-0.5">
               ${renderReportsList(messages)}
             </div>
           </article>
 
-          <article class="card detail-panel reveal ${
+          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4 ${
             selectedFinding && findingHealthTone(selectedFinding) === "critical"
-              ? "drift-highlight"
+              ? "border-[#EF4444]/40"
               : ""
           }">
-            <div class="card-head">
-              <h3>${escapeHtml(visualCopy.selectedFinding)}</h3>
-              <span>${
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.selectedFinding)}</h3>
+              <span class="text-xs text-[#9CA3AF]">${
                 selectedFinding
                   ? severityLabel(selectedFinding.severity, messages)
                   : "-"
               }</span>
             </div>
-            <div class="detail-content">
+            <div class="max-h-[420px] overflow-auto pr-0.5">
               ${renderFindingDetail(selectedFinding, report, messages)}
             </div>
           </article>
 
-          <article class="card graph-panel reveal">
-            <div class="card-head">
-              <h3>${escapeHtml(visualCopy.serviceGraph)}</h3>
-              <span>${escapeHtml(visualCopy.graphHint)}</span>
+          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4 xl:col-span-2 2xl:col-span-1">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.serviceGraph)}</h3>
+              <span class="text-xs text-[#9CA3AF]">${escapeHtml(visualCopy.graphHint)}</span>
             </div>
             ${renderServiceGraph(report)}
           </article>
         </section>
 
-        <section class="support-grid reveal">
-          <article class="card diff-panel">
-            <div class="card-head">
-              <h3>${escapeHtml(visualCopy.diffViewer)}</h3>
+        <section class="grid gap-4 xl:grid-cols-2">
+          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.diffViewer)}</h3>
             </div>
             ${renderDiffViewer(selectedFinding, visualCopy)}
           </article>
 
-          <article class="card code-panel">
-            <div class="card-head">
-              <h3>${escapeHtml(visualCopy.codeBlock)}</h3>
+          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.codeBlock)}</h3>
             </div>
             ${renderFindingCodeBlock(selectedFinding, visualCopy)}
           </article>
         </section>
 
-        <footer class="status ${state.error ? "error" : ""}">
+        <footer class="rounded-xl border px-3 py-2 text-xs ${
+          state.error
+            ? "border-[#EF4444]/35 bg-[#EF4444]/10 text-[#EF4444]"
+            : "border-white/10 bg-[#0F172A] text-[#CBD5E1]"
+        }">
           ${
             state.loadingFeed || state.loadingReport
               ? escapeHtml(messages.loadingData)
@@ -698,28 +716,28 @@ function render(): void {
 
 function renderReportsList(messages: DashboardMessages): string {
   if (state.loadingFeed && state.feed.length === 0) {
-    return `<p class="empty">${escapeHtml(messages.fetchingReports)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(messages.fetchingReports)}</p>`;
   }
 
   if (state.feed.length === 0) {
-    return `<p class="empty">${escapeHtml(messages.noFeed)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(messages.noFeed)}</p>`;
   }
 
   return state.feed
-    .map((item, index) => {
+    .map((item) => {
       const selected = item.jobId === state.selectedJobId ? "selected" : "";
       const repo = item.repositoryFullName ?? item.repositoryPath;
 
       return `
-        <button class="report-item ${selected}" data-report-id="${escapeHtml(item.jobId)}" style="--stagger:${index}">
-          <div class="report-top">
-            <strong>${escapeHtml(repo)}</strong>
-            <span class="status-pill ${item.status}">${escapeHtml(messages.statusLabels[item.status])}</span>
+        <button class="w-full rounded-xl border px-3 py-3 text-left transition ${reportItemClasses(selected)}" data-report-id="${escapeHtml(item.jobId)}">
+          <div class="flex items-start justify-between gap-2">
+            <strong class="break-all text-sm font-semibold text-[#F3F4F6]">${escapeHtml(repo)}</strong>
+            <span class="${statusPillClasses(item.status)}">${escapeHtml(messages.statusLabels[item.status])}</span>
           </div>
-          <p class="report-meta">#${item.pullRequestNumber ?? escapeHtml(messages.reportLocalLabel)} • ${escapeHtml(messages.analysisModeLabels[item.analysisMode])}</p>
-          <div class="report-counts">
-            <span>${item.findings}</span>
-            <small>${item.publishableFindings} ${escapeHtml(messages.reportPublishedShort)}</small>
+          <p class="mt-2 text-xs text-[#9CA3AF]">#${item.pullRequestNumber ?? escapeHtml(messages.reportLocalLabel)} • ${escapeHtml(messages.analysisModeLabels[item.analysisMode])}</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span class="text-lg font-semibold text-[#F3F4F6]">${item.findings}</span>
+            <small class="text-xs text-[#9CA3AF]">${item.publishableFindings} ${escapeHtml(messages.reportPublishedShort)}</small>
           </div>
         </button>
       `;
@@ -733,15 +751,15 @@ function renderFindingsTable(
   visualCopy: DashboardVisualCopy,
 ): string {
   if (!state.selectedJobId) {
-    return `<p class="empty">${escapeHtml(messages.selectReport)}</p>`;
+    return `<p class="px-3 py-2 text-sm text-[#9CA3AF]">${escapeHtml(messages.selectReport)}</p>`;
   }
 
   if (state.loadingReport && !getSelectedReport()) {
-    return `<p class="empty">${escapeHtml(messages.loadingReport)}</p>`;
+    return `<p class="px-3 py-2 text-sm text-[#9CA3AF]">${escapeHtml(messages.loadingReport)}</p>`;
   }
 
   if (findings.length === 0) {
-    return `<p class="empty">${escapeHtml(messages.noFindingsForFilters)}</p>`;
+    return `<p class="px-3 py-2 text-sm text-[#9CA3AF]">${escapeHtml(messages.noFindingsForFilters)}</p>`;
   }
 
   const rows = findings
@@ -754,29 +772,28 @@ function renderFindingsTable(
           : tone === "warning"
             ? visualCopy.statusWarning
             : visualCopy.statusOk;
-      const driftGlow = tone === "critical" ? "drift-glow" : "";
 
       return `
-        <tr class="finding-table-row ${selected} ${driftGlow}" data-finding-id="${escapeHtml(finding.id)}" tabindex="0" role="button">
-          <td><span class="badge neutral">${escapeHtml(messages.typeLabels[finding.type])}</span></td>
-          <td><span class="badge severity-${finding.severity}">${severityLabel(finding.severity, messages)}</span></td>
-          <td class="mono">${finding.score.final.toFixed(2)}</td>
-          <td class="mono">${escapeHtml(finding.file)}</td>
-          <td><span class="status-badge tone-${tone}">${escapeHtml(statusLabel)}</span></td>
+        <tr class="${findingRowClasses(selected, tone)}" data-finding-id="${escapeHtml(finding.id)}" tabindex="0" role="button">
+          <td class="px-3 py-3"><span class="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-semibold leading-none text-[#CBD5E1]">${escapeHtml(messages.typeLabels[finding.type])}</span></td>
+          <td class="px-3 py-3"><span class="${severityBadgeClasses(finding.severity)}">${severityLabel(finding.severity, messages)}</span></td>
+          <td class="px-3 py-3 font-mono text-xs [font-variant-numeric:tabular-nums] text-[#CBD5E1]">${finding.score.final.toFixed(2)}</td>
+          <td class="px-3 py-3 font-mono text-xs [font-variant-numeric:tabular-nums] text-[#CBD5E1]">${escapeHtml(finding.file)}</td>
+          <td class="px-3 py-3"><span class="${statusBadgeClasses(tone)}">${escapeHtml(statusLabel)}</span></td>
         </tr>
       `;
     })
     .join("");
 
   return `
-    <table class="findings-table">
+    <table class="w-full min-w-[690px] border-collapse">
       <thead>
         <tr>
-          <th>${escapeHtml(messages.type)}</th>
-          <th>${escapeHtml(messages.severity)}</th>
-          <th>Score</th>
-          <th>${escapeHtml(visualCopy.file)}</th>
-          <th>${escapeHtml(visualCopy.status)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.type)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.severity)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">Score</th>
+          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.file)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.status)}</th>
         </tr>
       </thead>
       <tbody>
@@ -792,7 +809,7 @@ function renderFindingDetail(
   messages: DashboardMessages,
 ): string {
   if (!finding || !report) {
-    return `<p class="empty">${escapeHtml(messages.chooseFinding)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(messages.chooseFinding)}</p>`;
   }
 
   const scope = report.summary.analysisScope;
@@ -802,41 +819,41 @@ function renderFindingDetail(
       : messages.analysisModeLabels.full;
 
   return `
-    <section class="detail-block">
-      <h3>${escapeHtml(messages.typeLabels[finding.type])} • ${severityLabel(finding.severity, messages)}</h3>
-      <p>${escapeHtml(finding.evidence)}</p>
+    <section class="mb-4 border-b border-white/10 pb-4">
+      <h3 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.typeLabels[finding.type])} • ${severityLabel(finding.severity, messages)}</h3>
+      <p class="mt-2 text-sm leading-6 text-[#CBD5E1]">${escapeHtml(finding.evidence)}</p>
     </section>
-    <section class="detail-block mono-grid">
-      <div><span>${escapeHtml(messages.id)}</span><code>${escapeHtml(finding.id)}</code></div>
-      <div><span>${escapeHtml(messages.fingerprint)}</span><code>${escapeHtml(finding.fingerprint)}</code></div>
-      <div><span>${escapeHtml(messages.rule)}</span><code>${escapeHtml(finding.ruleVersion)}</code></div>
-      <div><span>${escapeHtml(messages.schema)}</span><code>${escapeHtml(finding.schemaVersion)}</code></div>
-      <div><span>${escapeHtml(messages.scope)}</span><code>${escapeHtml(scopeSummary)}</code></div>
-      <div><span>${escapeHtml(messages.publishable)}</span><code>${finding.publishable ? escapeHtml(messages.publishableYes) : escapeHtml(messages.publishableNo)}</code></div>
+    <section class="mb-4 grid gap-3 border-b border-white/10 pb-4 sm:grid-cols-2">
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.id)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.id)}</code></div>
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.fingerprint)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.fingerprint)}</code></div>
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.rule)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.ruleVersion)}</code></div>
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.schema)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.schemaVersion)}</code></div>
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.scope)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(scopeSummary)}</code></div>
+      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.publishable)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${finding.publishable ? escapeHtml(messages.publishableYes) : escapeHtml(messages.publishableNo)}</code></div>
     </section>
-    <section class="detail-block">
-      <h4>${escapeHtml(messages.scoreBreakdown)}</h4>
+    <section class="mb-4 border-b border-white/10 pb-4">
+      <h4 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.scoreBreakdown)}</h4>
       ${renderScoreMeter("structural", finding.score.structural, messages)}
       ${renderScoreMeter("semantic", finding.score.semantic, messages)}
       ${renderScoreMeter("diff", finding.score.diff, messages)}
       ${renderScoreMeter("history", finding.score.history, messages)}
       ${renderScoreMeter("final", finding.score.final, messages, finding.score.threshold)}
     </section>
-    <section class="detail-block">
-      <h4>${escapeHtml(messages.paths)}</h4>
-      <p><strong>${escapeHtml(messages.primary)}:</strong> ${escapeHtml(finding.file)}</p>
-      <p><strong>${escapeHtml(messages.related)}:</strong> ${escapeHtml(finding.relatedFile ?? "-")}</p>
-      <p><strong>${escapeHtml(messages.artifacts)}:</strong> ${escapeHtml(
+    <section class="mb-4 border-b border-white/10 pb-4">
+      <h4 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.paths)}</h4>
+      <p class="mt-2 text-sm leading-6 text-[#CBD5E1]"><strong class="font-semibold text-[#E5E7EB]">${escapeHtml(messages.primary)}:</strong> ${escapeHtml(finding.file)}</p>
+      <p class="mt-1 text-sm leading-6 text-[#CBD5E1]"><strong class="font-semibold text-[#E5E7EB]">${escapeHtml(messages.related)}:</strong> ${escapeHtml(finding.relatedFile ?? "-")}</p>
+      <p class="mt-1 text-sm leading-6 text-[#CBD5E1]"><strong class="font-semibold text-[#E5E7EB]">${escapeHtml(messages.artifacts)}:</strong> ${escapeHtml(
         finding.relatedArtifactIds.join(", "),
       )}</p>
     </section>
-    <section class="detail-block">
-      <h4>${escapeHtml(messages.suggestedFix)}</h4>
-      <p>${escapeHtml(finding.suggestedFix ?? messages.noSuggestion)}</p>
+    <section class="mb-4 border-b border-white/10 pb-4">
+      <h4 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.suggestedFix)}</h4>
+      <p class="mt-2 text-sm leading-6 text-[#CBD5E1]">${escapeHtml(finding.suggestedFix ?? messages.noSuggestion)}</p>
     </section>
-    <section class="detail-block">
-      <h4>${escapeHtml(messages.semanticAssist)}</h4>
-      <p>${
+    <section>
+      <h4 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.semanticAssist)}</h4>
+      <p class="mt-2 text-sm leading-6 text-[#CBD5E1]">${
         finding.semanticReview
           ? `${escapeHtml(finding.semanticReview.model)} • ${escapeHtml(
               finding.semanticReview.semanticAssessment,
@@ -848,7 +865,96 @@ function renderFindingDetail(
 }
 
 function renderNavItem(label: string, active = false): string {
-  return `<button class="nav-item ${active ? "active" : ""}" type="button">${escapeHtml(label)}</button>`;
+  const activeClasses = active
+    ? "border-[#6366F1]/45 bg-[#6366F1]/20 text-[#F3F4F6]"
+    : "border-white/10 bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-[#6366F1]/10";
+
+  return `<button class="min-h-10 rounded-xl border px-3 text-left text-sm font-semibold transition ${activeClasses}" type="button">${escapeHtml(label)}</button>`;
+}
+
+function syncIndicatorClasses(tone: "critical" | "warning" | "ok"): string {
+  const base =
+    "mt-3 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium";
+
+  if (tone === "critical") {
+    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+  }
+
+  if (tone === "warning") {
+    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/12 text-[#F59E0B]`;
+  }
+
+  return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
+}
+
+function reportItemClasses(selected: string): string {
+  if (selected) {
+    return "border-[#6366F1]/45 bg-[#6366F1]/16";
+  }
+
+  return "border-white/10 bg-[#0F172A] hover:border-white/20 hover:bg-[#162034]";
+}
+
+function statusPillClasses(status: PersistedScanJob["status"]): string {
+  const base =
+    "inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]";
+
+  if (status === "completed") {
+    return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
+  }
+
+  if (status === "failed") {
+    return `${base} border-[#EF4444]/35 bg-[#EF4444]/10 text-[#EF4444]`;
+  }
+
+  return `${base} border-[#F59E0B]/35 bg-[#F59E0B]/10 text-[#F59E0B]`;
+}
+
+function findingRowClasses(
+  selected: string,
+  tone: "critical" | "warning" | "ok",
+): string {
+  const selectedClasses = selected
+    ? "bg-[#6366F1]/16"
+    : "hover:bg-[#6366F1]/10";
+  const toneClasses =
+    tone === "critical" ? "border-l-2 border-l-[#EF4444]/70" : "";
+
+  return `cursor-pointer border-b border-white/10 transition ${selectedClasses} ${toneClasses}`;
+}
+
+function severityBadgeClasses(severity: Severity): string {
+  const base =
+    "inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold leading-none";
+
+  if (severity === "critical") {
+    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+  }
+
+  if (severity === "high") {
+    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/14 text-[#F59E0B]`;
+  }
+
+  if (severity === "medium") {
+    return `${base} border-[#F59E0B]/32 bg-[#F59E0B]/10 text-[#FBBF24]`;
+  }
+
+  return `${base} border-white/15 bg-white/5 text-[#CBD5E1]`;
+}
+
+function statusBadgeClasses(tone: "critical" | "warning" | "ok"): string {
+  const base =
+    "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold leading-none before:inline-block before:h-1.5 before:w-1.5 before:rounded-full before:bg-current";
+
+  if (tone === "critical") {
+    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+  }
+
+  if (tone === "warning") {
+    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/12 text-[#F59E0B]`;
+  }
+
+  return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
 }
 
 function findingHealthTone(finding: Finding): "critical" | "warning" | "ok" {
@@ -900,7 +1006,7 @@ function renderDiffViewer(
   visualCopy: DashboardVisualCopy,
 ): string {
   if (!finding) {
-    return `<p class="empty">${escapeHtml(visualCopy.noDiffContext)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(visualCopy.noDiffContext)}</p>`;
   }
 
   const relatedPath = finding.relatedFile ?? "docs/contract.md";
@@ -923,10 +1029,10 @@ function renderDiffViewer(
   ];
 
   return `
-    <pre class="diff-viewer">${lines
+    <pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/10 border-t-2 border-t-[#6366F1]/45 bg-[#0F172A] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${lines
       .map(
         (line) =>
-          `<span class="diff-line ${line.tone}">${escapeHtml(line.text)}</span>`,
+          `<span class="block rounded px-0.5 ${diffLineClasses(line.tone)}">${escapeHtml(line.text)}</span>`,
       )
       .join("")}</pre>
   `;
@@ -937,7 +1043,7 @@ function renderFindingCodeBlock(
   visualCopy: DashboardVisualCopy,
 ): string {
   if (!finding) {
-    return `<p class="empty">${escapeHtml(visualCopy.noCodeContext)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(visualCopy.noCodeContext)}</p>`;
   }
 
   const payload = {
@@ -952,27 +1058,27 @@ function renderFindingCodeBlock(
     relatedArtifacts: finding.relatedArtifacts,
   };
 
-  return `<pre class="code-block">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+  return `<pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/10 border-t-2 border-t-[#6366F1]/30 bg-[#0F172A] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
 }
 
 function renderServiceGraph(report: PersistedFindingsReport | null): string {
   if (!report) {
-    return `<p class="empty">${escapeHtml(getVisualCopy(state.language).noGraphContext)}</p>`;
+    return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(getVisualCopy(state.language).noGraphContext)}</p>`;
   }
 
   const counts = report.summary.findingCounts;
 
   return `
-    <div class="service-graph">
-      <span class="graph-edge edge-api"></span>
-      <span class="graph-edge edge-docs"></span>
-      <span class="graph-edge edge-config"></span>
-      <span class="graph-edge edge-tests"></span>
-      ${renderGraphNode("API", counts.api_contract_drift, "node-api")}
-      ${renderGraphNode("Docs", counts.documentation_drift, "node-docs")}
-      ${renderGraphNode("Config", counts.config_drift, "node-config")}
-      ${renderGraphNode("Tests", counts.test_drift, "node-tests")}
-      ${renderGraphNode("Comments", counts.comment_drift, "node-comments")}
+    <div class="relative mt-1 h-[252px] overflow-hidden rounded-xl border border-white/10 bg-[#0F172A] [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,_transparent_1px),linear-gradient(90deg,_rgba(148,163,184,0.08)_1px,_transparent_1px)] [background-size:36px_36px]">
+      <span class="absolute left-1/2 top-[54px] h-[1.5px] w-[34%] origin-left rotate-[40deg] bg-slate-400/40"></span>
+      <span class="absolute left-[47%] top-[58px] h-[1.5px] w-[35%] origin-left rotate-[154deg] bg-slate-400/40"></span>
+      <span class="absolute left-[58%] top-[126px] h-[1.5px] w-[22%] origin-left rotate-[118deg] bg-slate-400/40"></span>
+      <span class="absolute left-[41%] top-[126px] h-[1.5px] w-[23%] origin-left rotate-[64deg] bg-slate-400/40"></span>
+      ${renderGraphNode("API", counts.api_contract_drift, "api")}
+      ${renderGraphNode("Docs", counts.documentation_drift, "docs")}
+      ${renderGraphNode("Config", counts.config_drift, "config")}
+      ${renderGraphNode("Tests", counts.test_drift, "tests")}
+      ${renderGraphNode("Comments", counts.comment_drift, "comments")}
     </div>
   `;
 }
@@ -980,12 +1086,24 @@ function renderServiceGraph(report: PersistedFindingsReport | null): string {
 function renderGraphNode(
   label: string,
   count: number,
-  className: string,
+  position: "api" | "docs" | "config" | "tests" | "comments",
 ): string {
+  const positionClasses: Record<typeof position, string> = {
+    api: "left-1/2 top-4 -translate-x-1/2",
+    docs: "left-3 top-24",
+    config: "right-3 top-24",
+    tests: "bottom-3 left-[23%]",
+    comments: "bottom-3 right-[18%]",
+  };
+  const toneClasses =
+    count > 0
+      ? "border-[#EF4444]/45 bg-[#EF4444]/12"
+      : "border-[#6366F1]/40 bg-[#6366F1]/12";
+
   return `
-    <div class="graph-node ${className} ${count > 0 ? "hot" : "ok"}">
-      <strong>${escapeHtml(label)}</strong>
-      <span>${count}</span>
+    <div class="absolute min-w-[94px] rounded-[10px] border px-3 py-2 text-center text-xs text-[#E5E7EB] transition hover:-translate-y-px hover:border-white/20 ${positionClasses[position]} ${toneClasses}">
+      <strong class="mb-1 block text-[10px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(label)}</strong>
+      <span class="text-sm font-semibold">${count}</span>
     </div>
   `;
 }
@@ -1003,13 +1121,25 @@ function renderScoreMeter(
       : "";
 
   return `
-    <div class="meter-row">
-      <span>${escapeHtml(messages.scoreLabels[label])} ${score.toFixed(2)}${escapeHtml(thresholdLabel)}</span>
-      <div class="meter-track">
-        <div class="meter-fill" style="width:${pct}%"></div>
+    <div class="mt-2">
+      <span class="text-[11px] font-mono text-[#CBD5E1]">${escapeHtml(messages.scoreLabels[label])} ${score.toFixed(2)}${escapeHtml(thresholdLabel)}</span>
+      <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-500/25">
+        <div class="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#818CF8] w-[${pct}%]"></div>
       </div>
     </div>
   `;
+}
+
+function diffLineClasses(tone: "ctx" | "add" | "del"): string {
+  if (tone === "add") {
+    return "bg-[#22C55E]/16 text-[#8DF2B2]";
+  }
+
+  if (tone === "del") {
+    return "bg-[#EF4444]/16 text-[#FCA5A5]";
+  }
+
+  return "text-[#B3C0D1]";
 }
 
 function bindEvents(): void {

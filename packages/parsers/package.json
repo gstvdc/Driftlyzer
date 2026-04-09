@@ -1,5 +1,5 @@
 {
-  "name": "@drift/core",
+  "name": "@drift/parsers",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@drift/parsers": "file:../parsers",
-    "@drift/shared": "file:../shared"
+    "@drift/shared": "file:../shared",
+    "typescript": "^5.0.0"
   }
 }

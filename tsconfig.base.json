@@ -3,6 +3,21 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "paths": {
+      "@drift/cli": [
+        "apps/cli/src/index.ts"
+      ],
+      "@drift/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@drift/parsers": [
+        "packages/parsers/src/index.ts"
+      ],
+      "@drift/shared": [
+        "packages/shared/src/index.ts"
+      ]
+    },
     "lib": [
       "ES2022"
     ],

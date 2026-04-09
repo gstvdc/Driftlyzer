@@ -12,6 +12,10 @@ O repositorio foi inicializado com:
 - CLI local para `scan`
 - pacote `core` com leitura e classificacao de arquivos
 - pacote `shared` com tipos iniciais do dominio
+- pacote `parsers` com extracao inicial de controllers/endpoints NestJS e chamadas HTTP Angular
+- parser de README para endpoints, comandos e envs
+- parser de `package.json` para scripts e parser de env para definicoes/usos
+- `scan` ja retornando artefatos, relacoes e findings iniciais
 
 ## Primeiros Comandos
 
@@ -35,6 +39,6 @@ PROJECT_CONTEXT.md
 
 Implementar os primeiros extratores estruturais:
 
-- controllers NestJS
-- chamadas HTTP Angular
-- referencias do README
+- enriquecimento de `frontend <-> backend` com payload/response
+- primeira camada explicita de relacoes/grafo no dominio
+- suite de testes versionada para fixtures

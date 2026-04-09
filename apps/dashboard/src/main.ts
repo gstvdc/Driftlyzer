@@ -523,24 +523,25 @@ function render(): void {
     : selectedFeedItem
       ? messages.statusLabels[selectedFeedItem.status]
       : messages.ready;
+  const activeRepository =
+    selectedFeedItem?.repositoryFullName ??
+    selectedFeedItem?.repositoryPath ??
+    messages.reportLocalLabel;
+  const activeAnalysisMode = selectedFeedItem
+    ? messages.analysisModeLabels[selectedFeedItem.analysisMode]
+    : messages.allLabel;
+  const activeStatus = selectedFeedItem
+    ? messages.statusLabels[selectedFeedItem.status]
+    : messages.ready;
 
-  appRoot.className =
-    "relative min-h-screen overflow-x-hidden p-3 md:p-4 text-[#E5E7EB]";
+  appRoot.className = "min-h-screen bg-[#0B0F14] p-2 text-[#E5E7EB] md:p-3";
 
   document.title = `Driftlyzer - ${messages.title}`;
 
   appRoot.innerHTML = `
-    <div
-      class="pointer-events-none fixed inset-0 opacity-20 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,_transparent_1px),linear-gradient(90deg,_rgba(148,163,184,0.08)_1px,_transparent_1px)] [background-size:56px_56px]"
-      aria-hidden="true"
-    ></div>
-    <div
-      class="pointer-events-none fixed inset-0 [background-image:radial-gradient(1200px_600px_at_84%_-8%,_rgba(99,102,241,0.16),_transparent_55%),radial-gradient(900px_500px_at_-10%_112%,_rgba(99,102,241,0.08),_transparent_54%)]"
-      aria-hidden="true"
-    ></div>
-    <div class="relative mx-auto grid w-[min(1460px,96vw)] grid-cols-1 gap-4 xl:grid-cols-[272px_minmax(0,1fr)]">
-      <aside class="rounded-2xl border border-white/10 bg-[#111827] p-4 xl:sticky xl:top-3 xl:min-h-[calc(100vh-1.5rem)]">
-        <div class="flex h-full flex-col gap-4">
+    <div class="mx-auto grid w-[min(1860px,98vw)] grid-cols-1 gap-5 xl:grid-cols-[252px_minmax(0,1fr)]">
+      <aside class="rounded-xl border border-white/[0.08] bg-[#0F172A] p-5 xl:sticky xl:top-3 xl:min-h-[calc(100vh-1.5rem)]">
+        <div class="flex h-full flex-col gap-5">
           <div>
             <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.missionControl)}</p>
             <div class="mt-3 w-full max-w-[194px]" aria-hidden="true">
@@ -575,41 +576,50 @@ function render(): void {
                 ${renderLanguageOptions(state.language)}
               </select>
             </label>
-            <button id="refresh-feed" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-4 text-sm font-semibold text-[#E5E7EB] transition hover:border-white/20 hover:bg-[#162034] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30">${escapeHtml(messages.refresh)}</button>
+            <button id="refresh-feed" class="min-h-10 rounded-xl border border-white/[0.05] bg-[#0F172A] px-4 text-sm font-semibold text-[#E5E7EB] transition-all duration-200 ease-out hover:border-[#6366F1]/45 hover:bg-[#6366F1]/10 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30">${escapeHtml(messages.refresh)}</button>
           </div>
         </div>
       </aside>
 
-      <main class="grid min-w-0 gap-4">
-        <header class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+      <main class="grid min-w-0 gap-5">
+        <header class="rounded-xl border border-white/[0.08] bg-[#111827] p-5">
           <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.title)}</p>
-          <h2 class="mt-2 max-w-[68ch] text-[clamp(1.02rem,1.3vw,1.18rem)] font-medium leading-7 text-[#CBD5E1]">${escapeHtml(messages.subtitle)}</h2>
+          <h2 class="mt-3 max-w-[68ch] text-[clamp(1.05rem,1.3vw,1.2rem)] font-semibold leading-7 text-[#CBD5E1]">${escapeHtml(messages.subtitle)}</h2>
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <span class="inline-flex max-w-full items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#CBD5E1]"><span class="max-w-[38ch] truncate">${escapeHtml(activeRepository)}</span></span>
+            <span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(activeAnalysisMode)}</span>
+            ${
+              selectedFeedItem
+                ? `<span class="${statusPillClasses(selectedFeedItem.status)}">${escapeHtml(activeStatus)}</span>`
+                : `<span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(activeStatus)}</span>`
+            }
+          </div>
         </header>
 
-        <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <article class="rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.driftScore)}</span>
-            <strong class="mt-2 block text-4xl font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${Math.round(driftScore * 100)}%</strong>
+            <strong class="mt-2 block text-[2.5rem] font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${Math.round(driftScore * 100)}%</strong>
             <p class="mt-2 text-sm text-[#9CA3AF]">${reportFindings.length} ${escapeHtml(messages.findings)}</p>
           </article>
-          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+          <article class="rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.criticalIssues)}</span>
-            <strong class="mt-2 block text-4xl font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${criticalIssues}</strong>
+            <strong class="mt-2 block text-[2.5rem] font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${criticalIssues}</strong>
             <p class="mt-2 text-sm text-[#9CA3AF]">${totalFindings} ${escapeHtml(messages.findings)}</p>
           </article>
-          <article class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+          <article class="rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.lastScan)}</span>
             <strong class="mt-2 block text-xl font-semibold leading-6 text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${escapeHtml(lastScan)}</strong>
             <p class="mt-2 text-sm text-[#9CA3AF]">${totalPublishable} ${escapeHtml(messages.publishable)}</p>
           </article>
         </section>
 
-        <section class="rounded-2xl border border-white/10 bg-[#111827] p-4">
+        <section class="rounded-xl border border-white/[0.06] bg-[#111827] p-5">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.findingsTable)}</h3>
+            <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.findingsTable)}</h3>
             <span class="text-xs text-[#9CA3AF]">${findings.length}</span>
           </div>
-          <div class="mb-3 grid gap-2 md:grid-cols-[0.92fr_0.92fr_1.2fr_auto]">
+          <div class="mb-4 grid gap-3 md:grid-cols-[0.92fr_0.92fr_1.2fr_auto]">
             <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
               ${escapeHtml(messages.severity)}
               <select id="filter-severity" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
@@ -635,15 +645,15 @@ function render(): void {
               ${escapeHtml(messages.publishableOnly)}
             </label>
           </div>
-          <div class="overflow-auto rounded-xl border border-white/10 bg-[#0F172A]">
+          <div class="overflow-auto rounded-xl border border-white/[0.05] bg-[#0F172A]">
             ${renderFindingsTable(findings, messages, visualCopy)}
           </div>
         </section>
 
-        <section class="grid gap-4 xl:grid-cols-2 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,1fr)]">
-          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+        <section class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,1fr)]">
+          <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.repositoriesPanel)}</h3>
+              <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.repositoriesPanel)}</h3>
               <span class="text-xs text-[#9CA3AF]">${state.feed.length}</span>
             </div>
             <div class="max-h-[420px] overflow-auto pr-0.5">
@@ -651,13 +661,13 @@ function render(): void {
             </div>
           </article>
 
-          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4 ${
+          <article class="min-w-0 rounded-xl border border-white/[0.08] bg-[rgba(255,255,255,0.02)] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14] ${
             selectedFinding && findingHealthTone(selectedFinding) === "critical"
-              ? "border-[#EF4444]/40"
-              : ""
+              ? "border-[#EF4444]/45"
+              : "border-[#6366F1]/30"
           }">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.selectedFinding)}</h3>
+              <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.selectedFinding)}</h3>
               <span class="text-xs text-[#9CA3AF]">${
                 selectedFinding
                   ? severityLabel(selectedFinding.severity, messages)
@@ -669,26 +679,26 @@ function render(): void {
             </div>
           </article>
 
-          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4 xl:col-span-2 2xl:col-span-1">
+          <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14] xl:col-span-2 2xl:col-span-1">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.serviceGraph)}</h3>
+              <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.serviceGraph)}</h3>
               <span class="text-xs text-[#9CA3AF]">${escapeHtml(visualCopy.graphHint)}</span>
             </div>
-            ${renderServiceGraph(report)}
+            ${renderServiceGraph(report, selectedFinding)}
           </article>
         </section>
 
-        <section class="grid gap-4 xl:grid-cols-2">
-          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+        <section class="grid gap-5 xl:grid-cols-2">
+          <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <div class="mb-3 flex items-center justify-between gap-2">
-              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.diffViewer)}</h3>
+              <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.diffViewer)}</h3>
             </div>
             ${renderDiffViewer(selectedFinding, visualCopy)}
           </article>
 
-          <article class="min-w-0 rounded-2xl border border-white/10 bg-[#111827] p-4">
+          <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <div class="mb-3 flex items-center justify-between gap-2">
-              <h3 class="m-0 text-sm font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.codeBlock)}</h3>
+              <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.codeBlock)}</h3>
             </div>
             ${renderFindingCodeBlock(selectedFinding, visualCopy)}
           </article>
@@ -729,7 +739,7 @@ function renderReportsList(messages: DashboardMessages): string {
       const repo = item.repositoryFullName ?? item.repositoryPath;
 
       return `
-        <button class="w-full rounded-xl border px-3 py-3 text-left transition ${reportItemClasses(selected)}" data-report-id="${escapeHtml(item.jobId)}">
+        <button class="w-full rounded-xl border px-3 py-3 text-left transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/35 ${reportItemClasses(selected)}" data-report-id="${escapeHtml(item.jobId)}">
           <div class="flex items-start justify-between gap-2">
             <strong class="break-all text-sm font-semibold text-[#F3F4F6]">${escapeHtml(repo)}</strong>
             <span class="${statusPillClasses(item.status)}">${escapeHtml(messages.statusLabels[item.status])}</span>
@@ -775,7 +785,7 @@ function renderFindingsTable(
 
       return `
         <tr class="${findingRowClasses(selected, tone)}" data-finding-id="${escapeHtml(finding.id)}" tabindex="0" role="button">
-          <td class="px-3 py-3"><span class="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-semibold leading-none text-[#CBD5E1]">${escapeHtml(messages.typeLabels[finding.type])}</span></td>
+          <td class="px-3 py-3"><span class="inline-flex items-center rounded-full border border-white/12 bg-white/[0.03] px-2 py-1 text-[11px] font-semibold leading-none text-[#CBD5E1]">${escapeHtml(messages.typeLabels[finding.type])}</span></td>
           <td class="px-3 py-3"><span class="${severityBadgeClasses(finding.severity)}">${severityLabel(finding.severity, messages)}</span></td>
           <td class="px-3 py-3 font-mono text-xs [font-variant-numeric:tabular-nums] text-[#CBD5E1]">${finding.score.final.toFixed(2)}</td>
           <td class="px-3 py-3 font-mono text-xs [font-variant-numeric:tabular-nums] text-[#CBD5E1]">${escapeHtml(finding.file)}</td>
@@ -789,11 +799,11 @@ function renderFindingsTable(
     <table class="w-full min-w-[690px] border-collapse">
       <thead>
         <tr>
-          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.type)}</th>
-          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.severity)}</th>
-          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">Score</th>
-          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.file)}</th>
-          <th class="sticky top-0 z-[1] border-b border-white/10 bg-[#101826] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.status)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/[0.04] bg-[#0F172A] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.type)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/[0.04] bg-[#0F172A] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.severity)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/[0.04] bg-[#0F172A] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">Score</th>
+          <th class="sticky top-0 z-[1] border-b border-white/[0.04] bg-[#0F172A] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.file)}</th>
+          <th class="sticky top-0 z-[1] border-b border-white/[0.04] bg-[#0F172A] px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(visualCopy.status)}</th>
         </tr>
       </thead>
       <tbody>
@@ -866,10 +876,10 @@ function renderFindingDetail(
 
 function renderNavItem(label: string, active = false): string {
   const activeClasses = active
-    ? "border-[#6366F1]/45 bg-[#6366F1]/20 text-[#F3F4F6]"
-    : "border-white/10 bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-[#6366F1]/10";
+    ? "border-[#6366F1]/45 bg-[#6366F1]/12 text-[#F3F4F6]"
+    : "border-white/[0.08] bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-white/[0.03]";
 
-  return `<button class="min-h-10 rounded-xl border px-3 text-left text-sm font-semibold transition ${activeClasses}" type="button">${escapeHtml(label)}</button>`;
+  return `<button class="min-h-10 rounded-lg border px-3 text-left text-sm font-medium transition-colors duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/35 ${activeClasses}" type="button">${escapeHtml(label)}</button>`;
 }
 
 function syncIndicatorClasses(tone: "critical" | "warning" | "ok"): string {
@@ -877,37 +887,37 @@ function syncIndicatorClasses(tone: "critical" | "warning" | "ok"): string {
     "mt-3 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium";
 
   if (tone === "critical") {
-    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+    return `${base} border-[#EF4444]/30 bg-[#EF4444]/8 text-[#FCA5A5]`;
   }
 
   if (tone === "warning") {
-    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/12 text-[#F59E0B]`;
+    return `${base} border-[#F59E0B]/30 bg-[#F59E0B]/8 text-[#FCD34D]`;
   }
 
-  return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
+  return `${base} border-[#22C55E]/28 bg-[#22C55E]/8 text-[#86EFAC]`;
 }
 
 function reportItemClasses(selected: string): string {
   if (selected) {
-    return "border-[#6366F1]/45 bg-[#6366F1]/16";
+    return "border-[#6366F1]/45 bg-[#6366F1]/10";
   }
 
-  return "border-white/10 bg-[#0F172A] hover:border-white/20 hover:bg-[#162034]";
+  return "border-white/[0.08] bg-[#0F172A] hover:border-white/20 hover:bg-white/[0.03]";
 }
 
 function statusPillClasses(status: PersistedScanJob["status"]): string {
   const base =
-    "inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em]";
+    "inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]";
 
   if (status === "completed") {
-    return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
+    return `${base} border-[#22C55E]/28 bg-[#22C55E]/8 text-[#86EFAC]`;
   }
 
   if (status === "failed") {
-    return `${base} border-[#EF4444]/35 bg-[#EF4444]/10 text-[#EF4444]`;
+    return `${base} border-[#EF4444]/30 bg-[#EF4444]/8 text-[#FCA5A5]`;
   }
 
-  return `${base} border-[#F59E0B]/35 bg-[#F59E0B]/10 text-[#F59E0B]`;
+  return `${base} border-[#F59E0B]/28 bg-[#F59E0B]/8 text-[#FCD34D]`;
 }
 
 function findingRowClasses(
@@ -915,12 +925,12 @@ function findingRowClasses(
   tone: "critical" | "warning" | "ok",
 ): string {
   const selectedClasses = selected
-    ? "bg-[#6366F1]/16"
-    : "hover:bg-[#6366F1]/10";
+    ? "bg-[#6366F1]/10"
+    : "hover:bg-white/[0.03]";
   const toneClasses =
-    tone === "critical" ? "border-l-2 border-l-[#EF4444]/70" : "";
+    tone === "critical" ? "border-l border-l-[#EF4444]/45" : "";
 
-  return `cursor-pointer border-b border-white/10 transition ${selectedClasses} ${toneClasses}`;
+  return `cursor-pointer border-b border-white/[0.05] transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]/35 ${selectedClasses} ${toneClasses}`;
 }
 
 function severityBadgeClasses(severity: Severity): string {
@@ -928,18 +938,18 @@ function severityBadgeClasses(severity: Severity): string {
     "inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold leading-none";
 
   if (severity === "critical") {
-    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+    return `${base} border-[#EF4444]/32 bg-[#EF4444]/10 text-[#FCA5A5]`;
   }
 
   if (severity === "high") {
-    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/14 text-[#F59E0B]`;
+    return `${base} border-[#F59E0B]/32 bg-[#F59E0B]/10 text-[#FCD34D]`;
   }
 
   if (severity === "medium") {
-    return `${base} border-[#F59E0B]/32 bg-[#F59E0B]/10 text-[#FBBF24]`;
+    return `${base} border-[#F59E0B]/24 bg-[#F59E0B]/8 text-[#FDE68A]`;
   }
 
-  return `${base} border-white/15 bg-white/5 text-[#CBD5E1]`;
+  return `${base} border-white/12 bg-white/[0.03] text-[#CBD5E1]`;
 }
 
 function statusBadgeClasses(tone: "critical" | "warning" | "ok"): string {
@@ -947,14 +957,14 @@ function statusBadgeClasses(tone: "critical" | "warning" | "ok"): string {
     "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold leading-none before:inline-block before:h-1.5 before:w-1.5 before:rounded-full before:bg-current";
 
   if (tone === "critical") {
-    return `${base} border-[#EF4444]/40 bg-[#EF4444]/12 text-[#EF4444]`;
+    return `${base} border-[#EF4444]/30 bg-[#EF4444]/8 text-[#FCA5A5]`;
   }
 
   if (tone === "warning") {
-    return `${base} border-[#F59E0B]/40 bg-[#F59E0B]/12 text-[#F59E0B]`;
+    return `${base} border-[#F59E0B]/30 bg-[#F59E0B]/8 text-[#FCD34D]`;
   }
 
-  return `${base} border-[#22C55E]/35 bg-[#22C55E]/10 text-[#22C55E]`;
+  return `${base} border-[#22C55E]/28 bg-[#22C55E]/8 text-[#86EFAC]`;
 }
 
 function findingHealthTone(finding: Finding): "critical" | "warning" | "ok" {
@@ -1029,7 +1039,7 @@ function renderDiffViewer(
   ];
 
   return `
-    <pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/10 border-t-2 border-t-[#6366F1]/45 bg-[#0F172A] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${lines
+    <pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/[0.08] bg-[#0B1220] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${lines
       .map(
         (line) =>
           `<span class="block rounded px-0.5 ${diffLineClasses(line.tone)}">${escapeHtml(line.text)}</span>`,
@@ -1058,50 +1068,105 @@ function renderFindingCodeBlock(
     relatedArtifacts: finding.relatedArtifacts,
   };
 
-  return `<pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/10 border-t-2 border-t-[#6366F1]/30 bg-[#0F172A] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
+  return `<pre class="m-0 max-h-[320px] overflow-auto rounded-xl border border-white/[0.08] bg-[#0B1220] p-3 font-mono text-xs leading-6 text-[#DBE3EF]">${escapeHtml(JSON.stringify(payload, null, 2))}</pre>`;
 }
 
-function renderServiceGraph(report: PersistedFindingsReport | null): string {
+function renderServiceGraph(
+  report: PersistedFindingsReport | null,
+  selectedFinding: Finding | undefined,
+): string {
   if (!report) {
     return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(getVisualCopy(state.language).noGraphContext)}</p>`;
   }
 
   const counts = report.summary.findingCounts;
+  const activePosition = selectedFinding
+    ? graphPositionByFindingType(selectedFinding.type)
+    : null;
+  const positions: Record<ServiceGraphNode, { x: number; y: number }> = {
+    api: { x: 50, y: 24 },
+    docs: { x: 18, y: 50 },
+    config: { x: 82, y: 50 },
+    tests: { x: 34, y: 80 },
+    comments: { x: 66, y: 80 },
+  };
+  const edges: Array<[ServiceGraphNode, ServiceGraphNode]> = [
+    ["api", "docs"],
+    ["api", "config"],
+    ["docs", "tests"],
+    ["config", "comments"],
+    ["tests", "comments"],
+  ];
+  const edgeMarkup = edges
+    .map(([from, to]) => {
+      const fromPos = positions[from];
+      const toPos = positions[to];
+      const isActive =
+        activePosition !== null &&
+        (from === activePosition || to === activePosition);
+
+      return `<line x1="${fromPos.x}" y1="${fromPos.y}" x2="${toPos.x}" y2="${toPos.y}" stroke="${
+        isActive ? "rgba(99, 102, 241, 0.45)" : "rgba(148, 163, 184, 0.25)"
+      }" stroke-width="1.3" stroke-linecap="round"></line>`;
+    })
+    .join("");
 
   return `
-    <div class="relative mt-1 h-[252px] overflow-hidden rounded-xl border border-white/10 bg-[#0F172A] [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,_transparent_1px),linear-gradient(90deg,_rgba(148,163,184,0.08)_1px,_transparent_1px)] [background-size:36px_36px]">
-      <span class="absolute left-1/2 top-[54px] h-[1.5px] w-[34%] origin-left rotate-[40deg] bg-slate-400/40"></span>
-      <span class="absolute left-[47%] top-[58px] h-[1.5px] w-[35%] origin-left rotate-[154deg] bg-slate-400/40"></span>
-      <span class="absolute left-[58%] top-[126px] h-[1.5px] w-[22%] origin-left rotate-[118deg] bg-slate-400/40"></span>
-      <span class="absolute left-[41%] top-[126px] h-[1.5px] w-[23%] origin-left rotate-[64deg] bg-slate-400/40"></span>
-      ${renderGraphNode("API", counts.api_contract_drift, "api")}
-      ${renderGraphNode("Docs", counts.documentation_drift, "docs")}
-      ${renderGraphNode("Config", counts.config_drift, "config")}
-      ${renderGraphNode("Tests", counts.test_drift, "tests")}
-      ${renderGraphNode("Comments", counts.comment_drift, "comments")}
+    <div class="relative mt-1 h-[276px] overflow-hidden rounded-xl border border-white/[0.08] bg-[#0B1220] [background-image:linear-gradient(rgba(148,163,184,0.04)_1px,_transparent_1px),linear-gradient(90deg,_rgba(148,163,184,0.04)_1px,_transparent_1px)] [background-size:36px_36px]">
+      <svg class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${edgeMarkup}
+      </svg>
+      ${renderGraphNode("API", counts.api_contract_drift, "api", activePosition === "api")}
+      ${renderGraphNode("Docs", counts.documentation_drift, "docs", activePosition === "docs")}
+      ${renderGraphNode("Config", counts.config_drift, "config", activePosition === "config")}
+      ${renderGraphNode("Tests", counts.test_drift, "tests", activePosition === "tests")}
+      ${renderGraphNode("Comments", counts.comment_drift, "comments", activePosition === "comments")}
     </div>
   `;
+}
+
+type ServiceGraphNode = "api" | "docs" | "config" | "tests" | "comments";
+
+function graphPositionByFindingType(
+  type: DriftType,
+): ServiceGraphNode {
+  switch (type) {
+    case "api_contract_drift":
+      return "api";
+    case "documentation_drift":
+      return "docs";
+    case "config_drift":
+      return "config";
+    case "test_drift":
+      return "tests";
+    case "comment_drift":
+      return "comments";
+  }
 }
 
 function renderGraphNode(
   label: string,
   count: number,
-  position: "api" | "docs" | "config" | "tests" | "comments",
+  position: ServiceGraphNode,
+  isActive: boolean,
 ): string {
-  const positionClasses: Record<typeof position, string> = {
-    api: "left-1/2 top-4 -translate-x-1/2",
-    docs: "left-3 top-24",
-    config: "right-3 top-24",
-    tests: "bottom-3 left-[23%]",
-    comments: "bottom-3 right-[18%]",
+  const positionClasses: Record<ServiceGraphNode, string> = {
+    api: "left-1/2 top-[10%] -translate-x-1/2",
+    docs: "left-[2.5%] top-[38%]",
+    config: "right-[2.5%] top-[38%]",
+    tests: "bottom-[6%] left-[22%]",
+    comments: "bottom-[6%] right-[22%]",
   };
   const toneClasses =
     count > 0
-      ? "border-[#EF4444]/45 bg-[#EF4444]/12"
-      : "border-[#6366F1]/40 bg-[#6366F1]/12";
+      ? "border-[#F59E0B]/28 bg-[#111827]"
+      : "border-white/20 bg-[#0F172A]";
+  const activeClasses = isActive
+    ? "border-[#6366F1]/55 bg-[#6366F1]/12"
+    : "";
 
   return `
-    <div class="absolute min-w-[94px] rounded-[10px] border px-3 py-2 text-center text-xs text-[#E5E7EB] transition hover:-translate-y-px hover:border-white/20 ${positionClasses[position]} ${toneClasses}">
+    <div class="absolute min-w-[94px] rounded-lg border px-3 py-2 text-center text-xs text-[#E5E7EB] transition-colors duration-150 ease-out hover:border-white/30 ${positionClasses[position]} ${toneClasses} ${activeClasses}">
       <strong class="mb-1 block text-[10px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(label)}</strong>
       <span class="text-sm font-semibold">${count}</span>
     </div>
@@ -1124,7 +1189,7 @@ function renderScoreMeter(
     <div class="mt-2">
       <span class="text-[11px] font-mono text-[#CBD5E1]">${escapeHtml(messages.scoreLabels[label])} ${score.toFixed(2)}${escapeHtml(thresholdLabel)}</span>
       <div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-500/25">
-        <div class="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#818CF8] w-[${pct}%]"></div>
+        <div class="h-full rounded-full bg-[#6366F1] transition-all duration-200 ease-out w-[${pct}%]"></div>
       </div>
     </div>
   `;
@@ -1132,11 +1197,11 @@ function renderScoreMeter(
 
 function diffLineClasses(tone: "ctx" | "add" | "del"): string {
   if (tone === "add") {
-    return "bg-[#22C55E]/16 text-[#8DF2B2]";
+    return "bg-[#22C55E]/10 text-[#86EFAC]";
   }
 
   if (tone === "del") {
-    return "bg-[#EF4444]/16 text-[#FCA5A5]";
+    return "bg-[#EF4444]/10 text-[#FCA5A5]";
   }
 
   return "text-[#B3C0D1]";

@@ -1,0 +1,13 @@
+{
+  "name": "@drift/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --import tsx src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@drift/core": "file:../../packages/core"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "drift-guardian",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Continuous repository consistency analyzer with structural parsing and targeted semantic review.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "scan": "npm run dev -w @drift/cli -- scan",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

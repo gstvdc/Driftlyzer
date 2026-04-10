@@ -13,8 +13,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@drift/shared": "file:../shared",
     "@prisma/client": "^6.6.0",
-    "@drift/shared": "file:../shared"
+    "bullmq": "^5.73.3",
+    "ioredis": "^5.10.1"
   },
   "devDependencies": {
     "prisma": "^6.6.0"

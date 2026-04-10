@@ -42,6 +42,7 @@ npm run scan -- . --semantic-review --ollama-model llama3
 npm run scan -- . --changed-files frontend/src/app/users.service.ts,backend/src/users/users.controller.ts --impact-depth 2
 npm run api:dev
 npm run worker:run
+npm run worker:listen
 npm run dashboard:dev
 npm run prisma:generate
 npm test
@@ -134,12 +135,50 @@ Processamento (Worker):
 - persiste findings no backend configurado
 - monta comentario de PR pronto para publicacao
 
+Fila (Redis + BullMQ):
+
+- quando `DRIFTLYZER_QUEUE_MODE=bullmq` e `REDIS_URL` estao definidos, o webhook da API publica o job na fila
+- o worker em `listen-queue` consome a fila e processa os jobs de forma continua
+- sem Redis configurado, o sistema permanece em modo `polling` (fluxo atual via jobs pendentes)
+
 Rodar local:
 
 ```bash
 npm run api:dev
 npm run worker:run
+# ou para consumo continuo da fila BullMQ:
+npm run worker:listen
 ```
+
+Configuracao basica da fila:
+
+```bash
+DRIFTLYZER_QUEUE_MODE=bullmq
+REDIS_URL=redis://127.0.0.1:6379
+DRIFTLYZER_QUEUE_NAME=driftlyzer:scan-jobs
+```
+
+Publicacao de comentario em PR (PAT ou GitHub App):
+
+```bash
+# habilita publicacao no worker
+DRIFTLYZER_PUBLISH_PR_COMMENT=true
+
+# opcao A: token pessoal (PAT)
+DRIFTLYZER_GITHUB_TOKEN=<token>
+
+# opcao B: GitHub App
+DRIFTLYZER_GITHUB_APP_ID=<app_id>
+DRIFTLYZER_GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+
+# opcional (GitHub Enterprise)
+DRIFTLYZER_GITHUB_API_BASE_URL=https://api.github.com
+```
+
+Observacoes:
+
+- para GitHub App, o webhook precisa trazer `installation.id` no payload
+- a chave privada aceita formato multiline real ou string com `\n`
 
 ### Endpoints para dashboard
 
@@ -217,10 +256,20 @@ docs/
 PROJECT_CONTEXT.md
 ```
 
-## Proximo Marco
+## Prioridade Real do Projeto
 
-Evoluir persistencia e produto:
+Ordem validada para execucao:
 
-- adaptar API/worker para persistencia SQL com transacoes
-- habilitar consultas historicas por `fingerprint` e por PR
-- publicar dashboard com autenticacao e filtros avancados
+1. PostgreSQL + Prisma
+2. Redis + BullMQ
+3. GitHub App (PR comments)
+4. Diff-based analysis
+5. Dashboard com historico
+6. Expandir detectores
+7. Score engine
+8. LLM explicador
+
+Status atual (9 de abril de 2026):
+
+- concluidos: 1, 2, 3, 4, 5, 7, 8
+- proximo foco: 6

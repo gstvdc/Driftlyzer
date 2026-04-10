@@ -28,6 +28,7 @@ function fromDbScanJob(input: {
   repositoryFullName: string | null;
   pullRequestNumber: number | null;
   deliveryId: string | null;
+  installationId: number | null;
 }): PersistedScanJob {
   return {
     id: input.id,
@@ -39,6 +40,7 @@ function fromDbScanJob(input: {
     repositoryFullName: input.repositoryFullName ?? undefined,
     pullRequestNumber: input.pullRequestNumber ?? undefined,
     deliveryId: input.deliveryId ?? undefined,
+    installationId: input.installationId ?? undefined,
   };
 }
 
@@ -56,6 +58,7 @@ function fromDbReport(input: {
     repositoryFullName: string | null;
     pullRequestNumber: number | null;
     deliveryId: string | null;
+    installationId: number | null;
   };
 }): PersistedFindingsReport {
   return {
@@ -97,6 +100,7 @@ export async function persistScanJobPostgres(
       repositoryFullName: job.repositoryFullName,
       pullRequestNumber: job.pullRequestNumber,
       deliveryId: job.deliveryId,
+      installationId: job.installationId,
     },
     update: {
       updatedAt: toDate(job.updatedAt),
@@ -106,6 +110,7 @@ export async function persistScanJobPostgres(
       repositoryFullName: job.repositoryFullName,
       pullRequestNumber: job.pullRequestNumber,
       deliveryId: job.deliveryId,
+      installationId: job.installationId,
     },
   });
 }
@@ -162,6 +167,7 @@ export async function markScanJobStatusPostgres(
       repositoryFullName: job.repositoryFullName,
       pullRequestNumber: job.pullRequestNumber,
       deliveryId: job.deliveryId,
+      installationId: job.installationId,
     },
     update: {
       updatedAt: new Date(),
@@ -171,6 +177,7 @@ export async function markScanJobStatusPostgres(
       repositoryFullName: job.repositoryFullName,
       pullRequestNumber: job.pullRequestNumber,
       deliveryId: job.deliveryId,
+      installationId: job.installationId,
     },
   });
 

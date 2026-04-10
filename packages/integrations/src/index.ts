@@ -1,10 +1,25 @@
 export {
+  buildGitHubAppJwt,
   buildDriftlyzerPullRequestComment,
+  createGitHubAppInstallationToken,
   parseRepositoryFullName,
   postPullRequestComment,
+  postPullRequestCommentWithGitHubApp,
+  type GitHubAppInstallationAuth,
   type GitHubPullRequestWebhookPayload,
   type PullRequestCommentTarget,
 } from "./github.js";
+
+export {
+  enqueueScanJob,
+  getScanQueueMode,
+  getScanQueueName,
+  startScanQueueWorker,
+  type ScanQueueEnqueueResult,
+  type ScanQueueMode,
+  type ScanQueuePayload,
+  type ScanQueueWorkerHandle,
+} from "./scan-queue.js";
 
 export {
   createScanJob,

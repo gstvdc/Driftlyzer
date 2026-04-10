@@ -24,6 +24,7 @@ export type PersistedScanJob = {
   repositoryFullName?: string;
   pullRequestNumber?: number;
   deliveryId?: string;
+  installationId?: number;
 };
 
 export type PersistedFindingsReport = {
@@ -55,6 +56,7 @@ export function createScanJob(input: {
   repositoryFullName?: string;
   pullRequestNumber?: number;
   deliveryId?: string;
+  installationId?: number;
 }): PersistedScanJob {
   const now = new Date().toISOString();
   const idBase = input.deliveryId?.trim() || "job";
@@ -69,6 +71,7 @@ export function createScanJob(input: {
     repositoryFullName: input.repositoryFullName,
     pullRequestNumber: input.pullRequestNumber,
     deliveryId: input.deliveryId,
+    installationId: input.installationId,
   };
 }
 

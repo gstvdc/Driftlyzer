@@ -11,6 +11,7 @@
     "scan": "npm run dev -w @drift/cli -- scan",
     "api:dev": "npm run dev -w @drift/api -- serve",
     "worker:run": "npm run dev -w @drift/worker -- run-pending",
+    "worker:listen": "npm run dev -w @drift/worker -- listen-queue",
     "dashboard:dev": "npm run dev -w @drift/dashboard",
     "dashboard:build": "npm run build -w @drift/dashboard",
     "prisma:generate": "npm run prisma:generate -w @drift/integrations",

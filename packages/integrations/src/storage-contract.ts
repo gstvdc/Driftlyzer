@@ -45,6 +45,7 @@ export type DriftlyzerPersistenceAdapter = {
     repositoryFullName?: string;
     pullRequestNumber?: number;
     deliveryId?: string;
+    installationId?: number;
     changedFiles: string[];
   }) => Promise<void>;
   saveScanReport: (model: DriftlyzerScanWriteModel) => Promise<void>;

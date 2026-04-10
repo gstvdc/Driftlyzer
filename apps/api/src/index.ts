@@ -8,9 +8,11 @@ import path from "node:path";
 import { scanRepository } from "@drift/core";
 import {
   createScanJob,
+  enqueueScanJob,
   listFindingsReports,
   persistScanJob,
   readFindingsReport,
+  type ScanQueueEnqueueResult,
   type PersistedFindingsReport,
   type GitHubPullRequestWebhookPayload,
   type PersistedScanJob,
@@ -44,6 +46,7 @@ export type EnqueuedGitHubJob = {
   accepted: boolean;
   reason?: string;
   job?: PersistedScanJob;
+  queue?: ScanQueueEnqueueResult;
   storageRoot: string;
 };
 
@@ -111,14 +114,26 @@ export async function handleGithubPullRequestWebhook(
     repositoryFullName: envelope.payload.repository.full_name,
     pullRequestNumber: envelope.payload.pull_request.number,
     deliveryId: envelope.deliveryId,
+    installationId: envelope.payload.installation?.id,
   });
 
   await persistScanJob(storageRoot, job);
+  const queue = await enqueueScanJob({
+    jobId: job.id,
+    repositoryPath: job.repositoryPath,
+    changedFiles: job.changedFiles,
+    repositoryFullName: job.repositoryFullName,
+    pullRequestNumber: job.pullRequestNumber,
+    deliveryId: job.deliveryId,
+    installationId: job.installationId,
+    createdAt: job.createdAt,
+  });
 
   return {
     accepted: true,
     storageRoot,
     job,
+    queue,
   };
 }
 

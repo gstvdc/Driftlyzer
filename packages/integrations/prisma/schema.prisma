@@ -24,9 +24,11 @@ model ScanJob {
   repositoryFullName String?        @map("repository_full_name")
   pullRequestNumber Int?            @map("pull_request_number")
   deliveryId        String?         @map("delivery_id")
+  installationId    Int?            @map("installation_id")
   findingsReport    FindingsReport?
 
   @@index([status], map: "idx_scan_jobs_status")
+  @@index([installationId], map: "idx_scan_jobs_installation_id")
   @@index([repositoryFullName, pullRequestNumber], map: "idx_scan_jobs_repo_pr")
   @@map("scan_jobs")
 }

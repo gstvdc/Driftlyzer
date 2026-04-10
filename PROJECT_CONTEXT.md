@@ -183,6 +183,22 @@ Composicao inicial sugerida:
 
 ## Roadmap de Implementacao
 
+Prioridade real validada em 9 de abril de 2026:
+
+1. PostgreSQL + Prisma
+2. Redis + BullMQ
+3. GitHub App (PR comments)
+4. Diff-based analysis
+5. Dashboard com historico
+6. Expandir detectores
+7. Score engine
+8. LLM explicador
+
+Leitura de status atual:
+
+- concluidos: 1, 2, 3, 4, 5, 7, 8
+- proximo foco: 6
+
 ### Fase 0
 
 Definir taxonomia, severidade, exemplos positivos e falso-positivos.
@@ -322,8 +338,8 @@ Bootstrap inicial do monorepo com:
 
 ## Proximos Passos Imediatos
 
-1. Introduzir uma camada de grafo/relations mais explicita no dominio.
-2. Preparar o esqueleto de `apps/api` e `apps/worker`.
-3. Enriquecer ainda mais o detector `frontend <-> backend` com suporte cross-file de tipos.
-4. Expandir a suite de testes para novos stacks e novos detectores.
-5. Em seguida, atacar a integracao com GitHub e comentario em PR.
+1. Expandir detectores para novos stacks e novos tipos de drift (etapa 6).
+2. Consolidar hardening do diff-based analysis e filtros de impacto em cenarios reais (etapa 4).
+3. Refinar pesos e calibracao do score engine por historico real de findings (etapa 7).
+4. Evoluir modelo de comentario para update idempotente por PR (evitar duplicacao).
+5. Preparar trilha de rollout para GitHub App em multiplas instalacoes.

@@ -406,8 +406,9 @@ function listRepositoryOptions(messages: DashboardMessages): Array<{
   value: string;
   label: string;
 }> {
-  const repositories = [...new Set(state.feed.map(repositoryLabelForFeedItem))]
-    .sort((left, right) => left.localeCompare(right));
+  const repositories = [
+    ...new Set(state.feed.map(repositoryLabelForFeedItem)),
+  ].sort((left, right) => left.localeCompare(right));
 
   return [
     {
@@ -975,9 +976,10 @@ function renderNavItem(
   label: string,
   activeSection: DashboardSection,
 ): string {
-  const activeClasses = section === activeSection
-    ? "border-[#6366F1]/45 bg-[#6366F1]/12 text-[#F3F4F6]"
-    : "border-white/[0.08] bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-white/[0.03]";
+  const activeClasses =
+    section === activeSection
+      ? "border-[#6366F1]/45 bg-[#6366F1]/12 text-[#F3F4F6]"
+      : "border-white/[0.08] bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-white/[0.03]";
 
   return `<button class="min-h-10 rounded-lg border px-3 text-left text-sm font-medium transition-colors duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/35 ${activeClasses}" type="button" data-nav-section="${escapeHtml(section)}">${escapeHtml(label)}</button>`;
 }

@@ -155,8 +155,16 @@ Configuracao basica da fila:
 ```bash
 DRIFTLYZER_QUEUE_MODE=bullmq
 REDIS_URL=redis://127.0.0.1:6379
-DRIFTLYZER_QUEUE_NAME=driftlyzer:scan-jobs
+DRIFTLYZER_QUEUE_NAME=driftlyzer-scan-jobs
 ```
+
+Opcional para webhook em monorepo/workspaces:
+
+```bash
+DRIFTLYZER_REPOSITORY_PATH=/caminho/absoluto/para/raiz/do/repositorio
+```
+
+Quando nao definido, a API tenta usar automaticamente `INIT_CWD` (diretorio onde `npm run` foi executado).
 
 Publicacao de comentario em PR (PAT ou GitHub App):
 

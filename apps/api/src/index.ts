@@ -174,7 +174,12 @@ export function startApiServer(
 ): void {
   const port = input.port ?? Number(process.env.PORT ?? 8787);
   const storageRoot = input.storageRoot ?? DEFAULT_STORAGE_ROOT;
-  const defaultRepositoryPath = input.defaultRepositoryPath ?? process.cwd();
+  const defaultRepositoryPath = path.resolve(
+    input.defaultRepositoryPath ??
+      process.env.DRIFTLYZER_REPOSITORY_PATH ??
+      process.env.INIT_CWD ??
+      process.cwd(),
+  );
 
   const server = createServer(async (request, response) => {
     const requestUrl = new URL(

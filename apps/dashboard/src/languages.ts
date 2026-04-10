@@ -10,6 +10,8 @@ export type DashboardMessages = {
   title: string;
   subtitle: string;
   language: string;
+  repository: string;
+  allRepositories: string;
   reports: string;
   findings: string;
   publishable: string;
@@ -99,6 +101,8 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       subtitle:
         "Acompanhe divergências entre código, contratos, configuração e documentação a partir dos scans mais recentes.",
       language: "Idioma",
+      repository: "Repositório",
+      allRepositories: "Todos os repositórios",
       reports: "Relatórios",
       findings: "Achados",
       publishable: "Publicáveis",
@@ -182,6 +186,8 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       subtitle:
         "Track drift across code, contracts, configuration, and documentation from the latest scans.",
       language: "Language",
+      repository: "Repository",
+      allRepositories: "All repositories",
       reports: "Reports",
       findings: "Findings",
       publishable: "Publishable",
@@ -258,6 +264,8 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       subtitle:
         "Sigue divergencias entre código, contratos, configuración y documentación a partir de los análisis más recientes.",
       language: "Idioma",
+      repository: "Repositorio",
+      allRepositories: "Todos los repositorios",
       reports: "Reportes",
       findings: "Hallazgos",
       publishable: "Publicables",
@@ -341,6 +349,8 @@ export const DASHBOARD_MESSAGES: Record<DashboardLanguage, DashboardMessages> =
       subtitle:
         "Suivez les écarts entre code, contrats, configuration et documentation à partir des analyses récentes.",
       language: "Langue",
+      repository: "Dépôt",
+      allRepositories: "Tous les dépôts",
       reports: "Rapports",
       findings: "Constats",
       publishable: "Publiables",

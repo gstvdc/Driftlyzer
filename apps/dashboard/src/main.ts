@@ -123,16 +123,25 @@ type Filters = {
   search: string;
 };
 
+type DashboardSection =
+  | "overview"
+  | "findings"
+  | "repositories"
+  | "coverage"
+  | "settings";
+
 type AppState = {
   feed: FindingsReportFeedItem[];
   reportCache: Map<string, PersistedFindingsReport>;
   selectedJobId: string | null;
+  selectedRepository: string;
   selectedFindingId: string | null;
   loadingFeed: boolean;
   loadingReport: boolean;
   error: string | null;
   filters: Filters;
   language: DashboardLanguage;
+  activeSection: DashboardSection;
 };
 
 const rootElement = document.querySelector<HTMLDivElement>("#app");
@@ -145,6 +154,9 @@ const appRoot = rootElement;
 
 const DASHBOARD_LANGUAGE_STORAGE_KEY = "driftlyzer.dashboard.language";
 const DASHBOARD_LOGO_SRC = "/logo.png";
+const ALL_REPOSITORIES_VALUE = "__all_repositories__";
+const SCROLL_PANEL_CLASSES =
+  "max-h-[420px] overflow-y-auto pr-1 [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:rgba(59,130,246,0.45)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#334155] hover:[&::-webkit-scrollbar-thumb]:bg-[#3B82F6]";
 
 function isDashboardLanguage(value: string): value is DashboardLanguage {
   return LANGUAGE_OPTIONS.some((option) => option.code === value);
@@ -183,11 +195,13 @@ const state: AppState = {
   feed: [],
   reportCache: new Map(),
   selectedJobId: null,
+  selectedRepository: ALL_REPOSITORIES_VALUE,
   selectedFindingId: null,
   loadingFeed: false,
   loadingReport: false,
   error: null,
   language: initialLanguage,
+  activeSection: "overview",
   filters: {
     severity: "all",
     type: "all",
@@ -350,6 +364,63 @@ async function boot(): Promise<void> {
   await loadFeed();
 }
 
+function repositoryLabelForFeedItem(item: FindingsReportFeedItem): string {
+  return item.repositoryFullName ?? item.repositoryPath;
+}
+
+function ensureSelectedRepository(): void {
+  if (state.selectedRepository === ALL_REPOSITORIES_VALUE) {
+    return;
+  }
+
+  const repositories = new Set(state.feed.map(repositoryLabelForFeedItem));
+
+  if (!repositories.has(state.selectedRepository)) {
+    state.selectedRepository = ALL_REPOSITORIES_VALUE;
+  }
+}
+
+function getVisibleFeed(): FindingsReportFeedItem[] {
+  if (state.selectedRepository === ALL_REPOSITORIES_VALUE) {
+    return state.feed;
+  }
+
+  return state.feed.filter(
+    (item) => repositoryLabelForFeedItem(item) === state.selectedRepository,
+  );
+}
+
+function ensureSelectedJobWithinVisibleFeed(): void {
+  const visibleFeed = getVisibleFeed();
+  const hasSelectedJob = visibleFeed.some(
+    (item) => item.jobId === state.selectedJobId,
+  );
+
+  if (!hasSelectedJob) {
+    state.selectedJobId = visibleFeed[0]?.jobId ?? null;
+    state.selectedFindingId = null;
+  }
+}
+
+function listRepositoryOptions(messages: DashboardMessages): Array<{
+  value: string;
+  label: string;
+}> {
+  const repositories = [...new Set(state.feed.map(repositoryLabelForFeedItem))]
+    .sort((left, right) => left.localeCompare(right));
+
+  return [
+    {
+      value: ALL_REPOSITORIES_VALUE,
+      label: messages.allRepositories,
+    },
+    ...repositories.map((repository) => ({
+      value: repository,
+      label: repository,
+    })),
+  ];
+}
+
 async function loadFeed(): Promise<void> {
   state.loadingFeed = true;
   state.error = null;
@@ -364,10 +435,8 @@ async function loadFeed(): Promise<void> {
 
     const payload = (await response.json()) as FindingsFeedResponse;
     state.feed = payload.reports;
-
-    if (!state.selectedJobId && state.feed.length > 0) {
-      state.selectedJobId = state.feed[0]?.jobId ?? null;
-    }
+    ensureSelectedRepository();
+    ensureSelectedJobWithinVisibleFeed();
 
     if (state.selectedJobId) {
       await loadReport(state.selectedJobId);
@@ -485,16 +554,20 @@ function ensureSelectedFinding(): void {
 }
 
 function render(): void {
+  ensureSelectedRepository();
+  ensureSelectedJobWithinVisibleFeed();
+
   const report = getSelectedReport();
   const findings = getFilteredFindings(report);
   const selectedFinding = findings.find(
     (finding) => finding.id === state.selectedFindingId,
   );
-  const totalFindings = state.feed.reduce(
+  const visibleFeed = getVisibleFeed();
+  const totalFindings = visibleFeed.reduce(
     (sum, item) => sum + item.findings,
     0,
   );
-  const totalPublishable = state.feed.reduce(
+  const totalPublishable = visibleFeed.reduce(
     (sum, item) => sum + item.publishableFindings,
     0,
   );
@@ -511,9 +584,10 @@ function render(): void {
     ? formatTimestamp(report.producedAt, state.language)
     : "-";
   const selectedFeedItem =
-    state.feed.find((item) => item.jobId === state.selectedJobId) ?? null;
+    visibleFeed.find((item) => item.jobId === state.selectedJobId) ?? null;
   const visualCopy = getVisualCopy(state.language);
   const messages = getDashboardMessages(state.language);
+  const repositoryOptions = listRepositoryOptions(messages);
   const syncTone = resolveSyncTone(
     selectedFeedItem?.status,
     Boolean(state.error),
@@ -524,9 +598,9 @@ function render(): void {
       ? messages.statusLabels[selectedFeedItem.status]
       : messages.ready;
   const activeRepository =
-    selectedFeedItem?.repositoryFullName ??
-    selectedFeedItem?.repositoryPath ??
-    messages.reportLocalLabel;
+    state.selectedRepository === ALL_REPOSITORIES_VALUE
+      ? messages.allRepositories
+      : state.selectedRepository;
   const activeAnalysisMode = selectedFeedItem
     ? messages.analysisModeLabels[selectedFeedItem.analysisMode]
     : messages.allLabel;
@@ -562,41 +636,54 @@ function render(): void {
           </div>
 
           <nav class="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-            ${renderNavItem(visualCopy.navOverview, true)}
-            ${renderNavItem(visualCopy.navFindings)}
-            ${renderNavItem(visualCopy.navRepositories)}
-            ${renderNavItem(visualCopy.navRules)}
-            ${renderNavItem(visualCopy.navSettings)}
+            ${renderNavItem("overview", visualCopy.navOverview, state.activeSection)}
+            ${renderNavItem("findings", visualCopy.navFindings, state.activeSection)}
+            ${renderNavItem("repositories", visualCopy.navRepositories, state.activeSection)}
+            ${renderNavItem("coverage", visualCopy.navRules, state.activeSection)}
+            ${renderNavItem("settings", visualCopy.navSettings, state.activeSection)}
           </nav>
 
-          <div class="mt-auto grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] xl:grid-cols-1">
+          <div class="mt-auto grid gap-3">
             <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
               ${escapeHtml(messages.language)}
               <select id="language-select" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
                 ${renderLanguageOptions(state.language)}
               </select>
             </label>
-            <button id="refresh-feed" class="min-h-10 rounded-xl border border-white/[0.05] bg-[#0F172A] px-4 text-sm font-semibold text-[#E5E7EB] transition-all duration-200 ease-out hover:border-[#6366F1]/45 hover:bg-[#6366F1]/10 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30">${escapeHtml(messages.refresh)}</button>
           </div>
         </div>
       </aside>
 
       <main class="grid min-w-0 gap-5">
-        <header class="rounded-xl border border-white/[0.08] bg-[#111827] p-5">
-          <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.title)}</p>
-          <h2 class="mt-3 max-w-[68ch] text-[clamp(1.05rem,1.3vw,1.2rem)] font-semibold leading-7 text-[#CBD5E1]">${escapeHtml(messages.subtitle)}</h2>
-          <div class="mt-4 flex flex-wrap items-center gap-2">
-            <span class="inline-flex max-w-full items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#CBD5E1]"><span class="max-w-[38ch] truncate">${escapeHtml(activeRepository)}</span></span>
-            <span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(activeAnalysisMode)}</span>
-            ${
-              selectedFeedItem
-                ? `<span class="${statusPillClasses(selectedFeedItem.status)}">${escapeHtml(activeStatus)}</span>`
-                : `<span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(activeStatus)}</span>`
-            }
+        <header data-dashboard-section="overview" class="rounded-xl border border-white/[0.08] bg-[#111827] p-5">
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
+            <div>
+              <p class="m-0 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]"><span class="h-px w-3 bg-current/80"></span>${escapeHtml(messages.title)}</p>
+              <h2 class="mt-3 max-w-[68ch] text-[clamp(1.05rem,1.3vw,1.2rem)] font-semibold leading-7 text-[#CBD5E1]">${escapeHtml(messages.subtitle)}</h2>
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <span class="inline-flex max-w-full items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#CBD5E1]">${escapeHtml(messages.repository)}: <span class="ml-1 max-w-[38ch] truncate">${escapeHtml(activeRepository)}</span></span>
+                <span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(messages.scope)}: ${escapeHtml(activeAnalysisMode)}</span>
+                ${
+                  selectedFeedItem
+                    ? `<span class="${statusPillClasses(selectedFeedItem.status)}">${escapeHtml(visualCopy.status)}: ${escapeHtml(activeStatus)}</span>`
+                    : `<span class="inline-flex items-center rounded-lg border border-white/[0.06] bg-[#0B1220] px-2.5 py-1 text-xs text-[#9CA3AF]">${escapeHtml(visualCopy.status)}: ${escapeHtml(activeStatus)}</span>`
+                }
+              </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1">
+              <label class="flex flex-col gap-1.5 text-xs text-[#9CA3AF]">
+                ${escapeHtml(messages.repository)}
+                <select id="repository-select" class="min-h-10 rounded-xl border border-white/10 bg-[#0F172A] px-3 text-sm text-[#E5E7EB] outline-none transition focus:border-[#6366F1]/80 focus:ring-2 focus:ring-[#6366F1]/30">
+                  ${renderRepositoryOptions(repositoryOptions, state.selectedRepository)}
+                </select>
+              </label>
+              <button id="refresh-feed" class="min-h-10 rounded-xl border border-white/[0.05] bg-[#0F172A] px-4 text-sm font-semibold text-[#E5E7EB] transition-all duration-200 ease-out hover:border-[#6366F1]/45 hover:bg-[#6366F1]/10 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30">${escapeHtml(messages.refresh)}</button>
+            </div>
           </div>
         </header>
 
-        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section data-dashboard-section="overview" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <article class="rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9CA3AF]">${escapeHtml(visualCopy.driftScore)}</span>
             <strong class="mt-2 block text-[2.5rem] font-semibold leading-none text-[#F3F4F6] [font-variant-numeric:tabular-nums]">${Math.round(driftScore * 100)}%</strong>
@@ -614,7 +701,7 @@ function render(): void {
           </article>
         </section>
 
-        <section class="rounded-xl border border-white/[0.06] bg-[#111827] p-5">
+        <section data-dashboard-section="findings" class="rounded-xl border border-white/[0.06] bg-[#111827] p-5">
           <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.findingsTable)}</h3>
             <span class="text-xs text-[#9CA3AF]">${findings.length}</span>
@@ -645,19 +732,19 @@ function render(): void {
               ${escapeHtml(messages.publishableOnly)}
             </label>
           </div>
-          <div class="overflow-auto rounded-xl border border-white/[0.05] bg-[#0F172A]">
+          <div class="overflow-auto rounded-xl border border-white/[0.05] bg-[#0F172A] [scrollbar-width:thin] [scrollbar-color:rgba(59,130,246,0.45)_transparent] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#334155] hover:[&::-webkit-scrollbar-thumb]:bg-[#3B82F6]">
             ${renderFindingsTable(findings, messages, visualCopy)}
           </div>
         </section>
 
-        <section class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,1fr)]">
+        <section data-dashboard-section="repositories" class="grid gap-5 xl:grid-cols-2 2xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.18fr)_minmax(0,1fr)]">
           <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.repositoriesPanel)}</h3>
-              <span class="text-xs text-[#9CA3AF]">${state.feed.length}</span>
+              <span class="text-xs text-[#9CA3AF]">${visibleFeed.length}</span>
             </div>
-            <div class="max-h-[420px] overflow-auto pr-0.5">
-              ${renderReportsList(messages)}
+            <div class="${SCROLL_PANEL_CLASSES}">
+              ${renderReportsList(visibleFeed, messages)}
             </div>
           </article>
 
@@ -674,12 +761,12 @@ function render(): void {
                   : "-"
               }</span>
             </div>
-            <div class="max-h-[420px] overflow-auto pr-0.5">
+            <div class="${SCROLL_PANEL_CLASSES}">
               ${renderFindingDetail(selectedFinding, report, messages)}
             </div>
           </article>
 
-          <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14] xl:col-span-2 2xl:col-span-1">
+          <article data-dashboard-section="coverage" class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14] xl:col-span-2 2xl:col-span-1">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.serviceGraph)}</h3>
               <span class="text-xs text-[#9CA3AF]">${escapeHtml(visualCopy.graphHint)}</span>
@@ -688,7 +775,7 @@ function render(): void {
           </article>
         </section>
 
-        <section class="grid gap-5 xl:grid-cols-2">
+        <section data-dashboard-section="findings" class="grid gap-5 xl:grid-cols-2">
           <article class="min-w-0 rounded-xl border border-white/[0.06] bg-[#111827] p-5 transition-colors duration-200 ease-out hover:border-white/[0.14]">
             <div class="mb-3 flex items-center justify-between gap-2">
               <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.diffViewer)}</h3>
@@ -702,6 +789,12 @@ function render(): void {
             </div>
             ${renderFindingCodeBlock(selectedFinding, visualCopy)}
           </article>
+        </section>
+
+        <section data-dashboard-section="settings" class="rounded-xl border border-white/[0.06] bg-[#111827] p-5">
+          <h3 class="m-0 text-base font-semibold text-[#F3F4F6]">${escapeHtml(visualCopy.navSettings)}</h3>
+          <p class="mt-2 text-sm leading-6 text-[#9CA3AF]">${escapeHtml(messages.ready)} ${escapeHtml(messages.language)}: ${escapeHtml(LANGUAGE_OPTIONS.find((option) => option.code === state.language)?.label ?? state.language)}.</p>
+          <p class="mt-2 text-sm leading-6 text-[#9CA3AF]">${escapeHtml(messages.repository)}: ${escapeHtml(activeRepository)}.</p>
         </section>
 
         <footer class="rounded-xl border px-3 py-2 text-xs ${
@@ -724,16 +817,19 @@ function render(): void {
   bindEvents();
 }
 
-function renderReportsList(messages: DashboardMessages): string {
-  if (state.loadingFeed && state.feed.length === 0) {
+function renderReportsList(
+  feedItems: FindingsReportFeedItem[],
+  messages: DashboardMessages,
+): string {
+  if (state.loadingFeed && feedItems.length === 0) {
     return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(messages.fetchingReports)}</p>`;
   }
 
-  if (state.feed.length === 0) {
+  if (feedItems.length === 0) {
     return `<p class="py-1 text-sm text-[#9CA3AF]">${escapeHtml(messages.noFeed)}</p>`;
   }
 
-  return state.feed
+  return feedItems
     .map((item) => {
       const selected = item.jobId === state.selectedJobId ? "selected" : "";
       const repo = item.repositoryFullName ?? item.repositoryPath;
@@ -834,12 +930,12 @@ function renderFindingDetail(
       <p class="mt-2 text-sm leading-6 text-[#CBD5E1]">${escapeHtml(finding.evidence)}</p>
     </section>
     <section class="mb-4 grid gap-3 border-b border-white/10 pb-4 sm:grid-cols-2">
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.id)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.id)}</code></div>
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.fingerprint)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.fingerprint)}</code></div>
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.rule)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.ruleVersion)}</code></div>
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.schema)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.schemaVersion)}</code></div>
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.scope)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${escapeHtml(scopeSummary)}</code></div>
-      <div class="grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.publishable)}</span><code class="break-words font-mono text-xs text-[#C7D2FE]">${finding.publishable ? escapeHtml(messages.publishableYes) : escapeHtml(messages.publishableNo)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.id)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.id)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.fingerprint)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.fingerprint)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.rule)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.ruleVersion)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.schema)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${escapeHtml(finding.schemaVersion)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.scope)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${escapeHtml(scopeSummary)}</code></div>
+      <div class="min-w-0 grid gap-1 rounded-xl border border-white/10 bg-[#0F172A] px-3 py-2"><span class="text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">${escapeHtml(messages.publishable)}</span><code class="block w-full break-all whitespace-normal font-mono text-xs text-[#C7D2FE]">${finding.publishable ? escapeHtml(messages.publishableYes) : escapeHtml(messages.publishableNo)}</code></div>
     </section>
     <section class="mb-4 border-b border-white/10 pb-4">
       <h4 class="text-sm font-semibold text-[#F3F4F6]">${escapeHtml(messages.scoreBreakdown)}</h4>
@@ -874,12 +970,16 @@ function renderFindingDetail(
   `;
 }
 
-function renderNavItem(label: string, active = false): string {
-  const activeClasses = active
+function renderNavItem(
+  section: DashboardSection,
+  label: string,
+  activeSection: DashboardSection,
+): string {
+  const activeClasses = section === activeSection
     ? "border-[#6366F1]/45 bg-[#6366F1]/12 text-[#F3F4F6]"
     : "border-white/[0.08] bg-transparent text-[#E5E7EB] hover:border-white/20 hover:bg-white/[0.03]";
 
-  return `<button class="min-h-10 rounded-lg border px-3 text-left text-sm font-medium transition-colors duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/35 ${activeClasses}" type="button">${escapeHtml(label)}</button>`;
+  return `<button class="min-h-10 rounded-lg border px-3 text-left text-sm font-medium transition-colors duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-[#6366F1]/35 ${activeClasses}" type="button" data-nav-section="${escapeHtml(section)}">${escapeHtml(label)}</button>`;
 }
 
 function syncIndicatorClasses(tone: "critical" | "warning" | "ok"): string {
@@ -1127,9 +1227,7 @@ function renderServiceGraph(
 
 type ServiceGraphNode = "api" | "docs" | "config" | "tests" | "comments";
 
-function graphPositionByFindingType(
-  type: DriftType,
-): ServiceGraphNode {
+function graphPositionByFindingType(type: DriftType): ServiceGraphNode {
   switch (type) {
     case "api_contract_drift":
       return "api";
@@ -1161,9 +1259,7 @@ function renderGraphNode(
     count > 0
       ? "border-[#F59E0B]/28 bg-[#111827]"
       : "border-white/20 bg-[#0F172A]";
-  const activeClasses = isActive
-    ? "border-[#6366F1]/55 bg-[#6366F1]/12"
-    : "";
+  const activeClasses = isActive ? "border-[#6366F1]/55 bg-[#6366F1]/12" : "";
 
   return `
     <div class="absolute min-w-[94px] rounded-lg border px-3 py-2 text-center text-xs text-[#E5E7EB] transition-colors duration-150 ease-out hover:border-white/30 ${positionClasses[position]} ${toneClasses} ${activeClasses}">
@@ -1210,6 +1306,8 @@ function diffLineClasses(tone: "ctx" | "add" | "del"): string {
 function bindEvents(): void {
   const languageSelect =
     document.querySelector<HTMLSelectElement>("#language-select");
+  const repositorySelect =
+    document.querySelector<HTMLSelectElement>("#repository-select");
   const severitySelect =
     document.querySelector<HTMLSelectElement>("#filter-severity");
   const typeSelect = document.querySelector<HTMLSelectElement>("#filter-type");
@@ -1231,6 +1329,20 @@ function bindEvents(): void {
     state.language = nextLanguage;
     persistLanguage(nextLanguage);
     applyDocumentLanguage(nextLanguage);
+    render();
+  });
+
+  repositorySelect?.addEventListener("change", () => {
+    state.selectedRepository = repositorySelect.value;
+    ensureSelectedRepository();
+    ensureSelectedJobWithinVisibleFeed();
+
+    if (state.selectedJobId) {
+      void loadReport(state.selectedJobId);
+      return;
+    }
+
+    ensureSelectedFinding();
     render();
   });
 
@@ -1262,6 +1374,34 @@ function bindEvents(): void {
     state.reportCache.clear();
     void loadFeed();
   });
+
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-nav-section]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const section = button.dataset.navSection as
+          | DashboardSection
+          | undefined;
+
+        if (!section) {
+          return;
+        }
+
+        state.activeSection = section;
+        render();
+
+        requestAnimationFrame(() => {
+          const target = document.querySelector<HTMLElement>(
+            `[data-dashboard-section="${section}"]`,
+          );
+
+          target?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      });
+    });
 
   document
     .querySelectorAll<HTMLButtonElement>("[data-report-id]")
@@ -1326,6 +1466,20 @@ function renderLanguageOptions(selected: DashboardLanguage): string {
         option.code === selected ? "selected" : ""
       }>${escapeHtml(option.label)}</option>`,
   ).join("");
+}
+
+function renderRepositoryOptions(
+  options: Array<{ value: string; label: string }>,
+  selected: string,
+): string {
+  return options
+    .map(
+      (option) =>
+        `<option value="${escapeHtml(option.value)}" ${
+          option.value === selected ? "selected" : ""
+        }>${escapeHtml(option.label)}</option>`,
+    )
+    .join("");
 }
 
 function renderSeverityOptions(
